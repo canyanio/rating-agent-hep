@@ -1,5 +1,5 @@
 # API server listen address
 # Defauls to: ":8080" which will listen on all avalable interfaces.
-# Overwrite with environment variable: RATING_HEP_AGENT_LISTEN
+# Overwrite with environment variable: RATING_AGENT_HEP_LISTEN
 
 listen: :9060

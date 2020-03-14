@@ -1,0 +1,8 @@
+version: '2.1'
+services:
+
+  #
+  # fake sipp carrier
+  #
+  rating-agent-hep:
+    image: 'canyan/rating-agent-hep:latest'

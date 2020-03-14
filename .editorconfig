@@ -17,6 +17,6 @@ indent_size = 4
 indent_style = space
 indent_size = 4
 
-[*.json]
+[{*.json,*.cfg}]
 indent_style = space
 indent_size = 4

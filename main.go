@@ -10,6 +10,7 @@ import (
 	"github.com/urfave/cli"
 
 	dconfig "github.com/canyanio/rating-agent-hep/config"
+	"github.com/canyanio/rating-agent-hep/server"
 )
 
 func main() {
@@ -50,7 +51,7 @@ func doMain(args []string) {
 		}
 
 		// Enable setting config values by environment variables
-		config.Config.SetEnvPrefix("RATING_HEP_AGENT")
+		config.Config.SetEnvPrefix("RATING_AGENT_HEP")
 		config.Config.AutomaticEnv()
 		config.Config.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
@@ -64,5 +65,6 @@ func doMain(args []string) {
 }
 
 func cmdAgent(args *cli.Context) error {
-	return nil
+	err := server.StartServer()
+	return err
 }
