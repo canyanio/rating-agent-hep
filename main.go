@@ -1,15 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"os"
-	"strings"
 
-	"github.com/mendersoftware/go-lib-micro/config"
 	"github.com/urfave/cli"
 
-	dconfig "github.com/canyanio/rating-agent-hep/config"
+	"github.com/canyanio/rating-agent-hep/config"
 	"github.com/canyanio/rating-agent-hep/server"
 )
 
@@ -43,28 +39,21 @@ func doMain(args []string) {
 	app.Action = cmdAgent
 
 	app.Before = func(args *cli.Context) error {
-		err := config.FromConfigFile(configPath, dconfig.Defaults)
+		err := config.Init(configPath)
 		if err != nil {
-			return cli.NewExitError(
-				fmt.Sprintf("error loading configuration: %s", err),
-				1)
+			return cli.NewExitError(err.Error(), 1)
 		}
-
-		// Enable setting config values by environment variables
-		config.Config.SetEnvPrefix("RATING_AGENT_HEP")
-		config.Config.AutomaticEnv()
-		config.Config.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-
 		return nil
 	}
 
 	err := app.Run(args)
 	if err != nil {
-		log.Fatal(err)
+		cli.NewExitError(err.Error(), 1)
 	}
 }
 
 func cmdAgent(args *cli.Context) error {
-	err := server.StartServer()
+	srv := server.NewUDPServer()
+	err := srv.Start()
 	return err
 }

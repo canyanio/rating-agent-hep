@@ -1,5 +1,17 @@
-# API server listen address
-# Defauls to: ":8080" which will listen on all avalable interfaces.
+# Agent listen address (UDP)
+# Defauls to: ":9060" which will listen on all avalable interfaces.
 # Overwrite with environment variable: RATING_AGENT_HEP_LISTEN
 
-listen: :9060
+# listen: :9060
+
+# Message bus URI
+# Defauls to: "amqp://user:password@localhost:5672//"
+# Overwrite with environment variable: RATING_AGENT_HEP_MESSAGE_BUS_URI
+
+# message_bus_uri: amqp://user:password@localhost:5672//
+
+# Tenant
+# Defauls to: "default"
+# Overwrite with environment variable: RATING_AGENT_HEP_TENANT
+
+# tenant: default
