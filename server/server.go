@@ -64,7 +64,6 @@ func (s *UDPServer) Start() error {
 	ctx := context.Background()
 	l := log.FromContext(ctx)
 
-	l.Infof("Connecting to message bus: %s", s.client.GetMessageBusURI())
 	if err := s.client.Connect(ctx); err != nil {
 		l.Error(err)
 		return err
@@ -111,4 +110,7 @@ func (s *UDPServer) Start() error {
 // Stop stops the UDP server
 func (s *UDPServer) Stop() {
 	close(s.quit)
+
+	ctx := context.Background()
+	s.client.Close(ctx)
 }

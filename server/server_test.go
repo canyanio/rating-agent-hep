@@ -3,17 +3,18 @@ package server
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
-	"reflect"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/canyanio/rating-agent-hep/client/rabbitmq"
 	mock_rabbitmq "github.com/canyanio/rating-agent-hep/client/rabbitmq/mock"
-	"github.com/canyanio/rating-agent-hep/model"
-	mock_processor "github.com/canyanio/rating-agent-hep/processor/mock"
 )
 
 func getFreeUDPPort() (int, error) {
@@ -36,13 +37,14 @@ func TestNewUDPServer(t *testing.T) {
 }
 
 func TestUDPServerStart(t *testing.T) {
-	buff := []byte("sample string")
-
-	msg := &model.SIPMessage{}
+	cwd, _ := os.Getwd()
+	path := filepath.Join(cwd, "..", "testdata", "hep-invite.bin")
+	buffInvite, _ := ioutil.ReadFile(path)
+	path = filepath.Join(cwd, "..", "testdata", "hep-bye.bin")
+	buffBye, _ := ioutil.ReadFile(path)
 
 	// mock rabbitmq client
 	mockClient := &mock_rabbitmq.Client{}
-	mockClient.On("GetMessageBusURI").Return("URI")
 	mockClient.On("Connect",
 		mock.MatchedBy(func(_ context.Context) bool {
 			return true
@@ -53,21 +55,26 @@ func TestUDPServerStart(t *testing.T) {
 			return true
 		}),
 	).Return(nil)
-
-	// mock processor, to check the received bytes
-	mockProcessor := &mock_processor.HEPProcessor{}
-	mockProcessor.On("Process",
-		mock.MatchedBy(func(packet []byte) bool {
-			return reflect.DeepEqual(packet, buff)
+	mockClient.On("Publish",
+		mock.MatchedBy(func(_ context.Context) bool {
+			return true
 		}),
-	).Return(msg, nil)
+		rabbitmq.QueueNameBeginTransaction,
+		mock.AnythingOfType("*model.BeginTransactionRequest"),
+	).Return(nil)
+	mockClient.On("Publish",
+		mock.MatchedBy(func(_ context.Context) bool {
+			return true
+		}),
+		rabbitmq.QueueNameEndTransaction,
+		mock.AnythingOfType("*model.EndTransactionRequest"),
+	).Return(nil)
 
 	// new UDP server with mocked processor
 	srv := NewUDPServer()
 	assert.NotNil(t, srv)
 
 	srv.setClient(mockClient)
-	srv.setProcessor(mockProcessor)
 
 	// get a free UDP port
 	udpPort, err := getFreeUDPPort()
@@ -88,15 +95,20 @@ func TestUDPServerStart(t *testing.T) {
 	assert.Nil(t, err)
 	defer conn.Close()
 
-	// write the buff
-	bytes, err := conn.Write(buff)
+	// write the buffInvite
+	bytes, err := conn.Write(buffInvite)
 	assert.Nil(t, err)
-	assert.Equal(t, 13, bytes)
+	assert.Equal(t, len(buffInvite), bytes)
+
+	// write the buffBye
+	bytes, err = conn.Write(buffBye)
+	assert.Nil(t, err)
+	assert.Equal(t, len(buffBye), bytes)
 
 	// wait the server to process the packet, then shut it down
 	time.Sleep(100 * time.Millisecond)
 	srv.Stop()
 
 	// assert expectations (processor)
-	mockProcessor.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 }
