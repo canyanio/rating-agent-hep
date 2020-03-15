@@ -2,6 +2,8 @@ package state
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
 	"github.com/go-redis/redis/v7"
 	"github.com/pkg/errors"
@@ -47,4 +49,40 @@ func (m *RedisManager) Close(context context.Context) error {
 	err := m.client.Close()
 	m.client = nil
 	return err
+}
+
+// Set updates the data associated with a key
+func (m *RedisManager) Set(context context.Context, key string, data interface{}, ttl int) error {
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
+		return errors.Wrap(err, "unable to marshal request to JSON")
+	}
+	err = m.client.Set(key, dataJSON, time.Duration(ttl)*time.Second).Err()
+	return err
+}
+
+// Get retrives the data associated with a key
+func (m *RedisManager) Get(context context.Context, key string, destination interface{}) error {
+	dataJSON, err := m.client.Get(key).Result()
+	if err == redis.Nil {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(dataJSON), destination)
+	if err != nil {
+		return errors.Wrap(err, "unable to marshal request to JSON")
+	}
+	return nil
+}
+
+// Delete deletes a key and its associated data
+func (m *RedisManager) Delete(context context.Context, key string) error {
+	err := m.client.Del(key).Err()
+	return err
+}
+
+// Delete deletes a key and its associated data
+func (m *RedisManager) flushAll(context context.Context) {
+	m.client.FlushAll()
 }
