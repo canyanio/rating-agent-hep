@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   #
-  # fake sipp carrier
+  # RabbitMQ messaging bus
   #
   rabbitmq:
     image: 'bitnami/rabbitmq:3.7'
