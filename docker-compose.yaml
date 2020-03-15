@@ -2,7 +2,7 @@ version: '2.1'
 services:
 
   #
-  # fake sipp carrier
+  # The HEP protocol agent
   #
   rating-agent-hep:
-    image: 'canyan/rating-agent-hep:latest'
+    image: 'canyan/rating-agent-hep:master'
