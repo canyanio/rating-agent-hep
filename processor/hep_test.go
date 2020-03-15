@@ -34,25 +34,25 @@ func TestProcessInvalid(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestHEPFromBytesInvalid(t *testing.T) {
+func TestHepFromBytesInvalid(t *testing.T) {
 	srv := NewHEPProcessor()
 
 	packet := []byte{}
 
-	hepPacket, err := srv.HEPFromBytes(packet)
+	hepPacket, err := srv.hepFromBytes(packet)
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), "proto: required field \"Version\" not set")
 	assert.Nil(t, hepPacket)
 }
 
-func TestHEPFromBytes(t *testing.T) {
+func TestHepFromBytes(t *testing.T) {
 	srv := NewHEPProcessor()
 
 	cwd, _ := os.Getwd()
 	path := filepath.Join(cwd, "..", "testdata", "hep-invite.bin")
 	packet, _ := ioutil.ReadFile(path)
 
-	hepPacket, err := srv.HEPFromBytes(packet)
+	hepPacket, err := srv.hepFromBytes(packet)
 	assert.Nil(t, err)
 	assert.NotNil(t, hepPacket)
 	assert.Equal(t, uint32(2), hepPacket.Version)

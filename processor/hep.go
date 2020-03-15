@@ -8,7 +8,6 @@ import (
 
 // HEPProcessorInterface is the interface for Server objects
 type HEPProcessorInterface interface {
-	HEPFromBytes(packet []byte) (*decoder.HEP, error)
 	Process(packet []byte) (*model.SIPMessage, error)
 }
 
@@ -23,15 +22,14 @@ func NewHEPProcessor() *HEPProcessor {
 
 // Process raw bytes containing a HEP packet
 func (s *HEPProcessor) Process(packet []byte) (*model.SIPMessage, error) {
-	hepPacket, err := s.HEPFromBytes(packet)
+	hepPacket, err := s.hepFromBytes(packet)
 	if err != nil {
 		return nil, err
 	}
 	return model.SIPMessageFromHEP(hepPacket), nil
 }
 
-// HEPFromBytes returns a HEP packet from the raw bytes
-func (s *HEPProcessor) HEPFromBytes(packet []byte) (*decoder.HEP, error) {
+func (s *HEPProcessor) hepFromBytes(packet []byte) (*decoder.HEP, error) {
 	hepPacket, err := decoder.DecodeHEP(packet)
 	if err != nil {
 		return nil, err
