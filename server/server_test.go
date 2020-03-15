@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"reflect"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	mock_rabbitmq "github.com/canyanio/rating-agent-hep/client/rabbitmq/mock"
 	"github.com/canyanio/rating-agent-hep/model"
 	mock_processor "github.com/canyanio/rating-agent-hep/processor/mock"
 )
@@ -38,6 +40,20 @@ func TestUDPServerStart(t *testing.T) {
 
 	msg := &model.SIPMessage{}
 
+	// mock rabbitmq client
+	mockClient := &mock_rabbitmq.Client{}
+	mockClient.On("GetMessageBusURI").Return("URI")
+	mockClient.On("Connect",
+		mock.MatchedBy(func(_ context.Context) bool {
+			return true
+		}),
+	).Return(nil)
+	mockClient.On("Close",
+		mock.MatchedBy(func(_ context.Context) bool {
+			return true
+		}),
+	).Return(nil)
+
 	// mock processor, to check the received bytes
 	mockProcessor := &mock_processor.HEPProcessor{}
 	mockProcessor.On("Process",
@@ -50,6 +66,7 @@ func TestUDPServerStart(t *testing.T) {
 	srv := NewUDPServer()
 	assert.NotNil(t, srv)
 
+	srv.setClient(mockClient)
 	srv.setProcessor(mockProcessor)
 
 	// get a free UDP port
@@ -60,7 +77,9 @@ func TestUDPServerStart(t *testing.T) {
 
 	// start the server
 	go srv.Start()
-	defer srv.Stop()
+
+	// wait the server to start-up
+	time.Sleep(100 * time.Millisecond)
 
 	// connect to the server
 	raddr, err := net.ResolveUDPAddr("udp", listen)
@@ -74,7 +93,10 @@ func TestUDPServerStart(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 13, bytes)
 
-	// assert expectations (processor)
+	// wait the server to process the packet, then shut it down
 	time.Sleep(100 * time.Millisecond)
+	srv.Stop()
+
+	// assert expectations (processor)
 	mockProcessor.AssertExpectations(t)
 }

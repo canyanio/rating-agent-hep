@@ -1,11 +1,11 @@
 package server
 
 import (
-	"log"
+	"context"
 	"net"
 
 	"github.com/mendersoftware/go-lib-micro/config"
-	"github.com/pkg/errors"
+	"github.com/mendersoftware/go-lib-micro/log"
 
 	"github.com/canyanio/rating-agent-hep/client/rabbitmq"
 	dconfig "github.com/canyanio/rating-agent-hep/config"
@@ -34,11 +34,14 @@ type packet struct {
 
 // NewUDPServer initializes a new UDP server
 func NewUDPServer() *UDPServer {
-	p := processor.NewHEPProcessor()
-	quit := make(chan interface{})
+	messagebusURI := config.Config.GetString(dconfig.SettingMessageBusURI)
 	listen := config.Config.GetString(dconfig.SettingListen)
+	quit := make(chan interface{})
+	p := processor.NewHEPProcessor()
+	c := rabbitmq.NewClient(messagebusURI)
 	return &UDPServer{
 		processor: p,
+		client:    c,
 		quit:      quit,
 		listen:    listen,
 	}
@@ -58,9 +61,20 @@ func (s *UDPServer) setClient(c rabbitmq.ClientInterface) {
 
 // Start starts the UDP server which receives the HEP packats
 func (s *UDPServer) Start() error {
-	log.Printf("Listening on %v", s.listen)
+	ctx := context.Background()
+	l := log.FromContext(ctx)
+
+	l.Infof("Connecting to message bus: %s", s.client.GetMessageBusURI())
+	if err := s.client.Connect(ctx); err != nil {
+		l.Error(err)
+		return err
+	}
+	defer s.client.Close(ctx)
+
+	l.Infof("Listening on %v", s.listen)
 	pc, err := net.ListenPacket("udp", s.listen)
 	if err != nil {
+		l.Error(err)
 		return err
 	}
 	defer pc.Close()
@@ -84,7 +98,7 @@ func (s *UDPServer) Start() error {
 	for {
 		select {
 		case pkt := <-packets:
-			go s.serve(pkt.pc, pkt.addr, pkt.payload)
+			go s.handle(ctx, pkt.pc, pkt.addr, pkt.payload)
 			break
 
 		case <-s.quit:
@@ -97,12 +111,4 @@ func (s *UDPServer) Start() error {
 // Stop stops the UDP server
 func (s *UDPServer) Stop() {
 	close(s.quit)
-}
-
-func (s *UDPServer) serve(pc net.PacketConn, addr net.Addr, packet []byte) {
-	msg, err := s.processor.Process(packet)
-	if err != nil {
-		log.Print(errors.Wrap(err, "unable to decode the HEP package"))
-	}
-	log.Printf("Message from %s, to %s, call-id %s", msg.From.User, msg.To.User, msg.CallId.Src)
 }
