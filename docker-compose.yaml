@@ -8,6 +8,8 @@ services:
     image: 'canyan/rating-agent-hep:master'
     environment:
     - RATING_AGENT_HEP_MESSAGE_BUS_URI=amqp://user:password@rabbitmq:5672//
+    - RATING_AGENT_HEP_REDIS_ADDRESS=redis:6379
     depends_on:
     - rabbitmq
+    - redis
     restart: always

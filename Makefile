@@ -2,7 +2,7 @@ GO ?= go
 GOFMT ?= gofmt "-s"
 PACKAGES ?= $(shell $(GO) list ./...)
 GOFILES := $(shell find . -name "*.go" -type f -not -path './vendor/*')
-DOCKER_COMPOSE_FILES = -f docker-compose.yaml -f docker-compose.carrier.yaml -f docker-compose.kamailio.yaml -f docker-compose.rabbitmq.yaml -f docker-compose.tester.yaml
+DOCKER_COMPOSE_FILES = -f docker-compose.yaml -f docker-compose.carrier.yaml -f docker-compose.kamailio.yaml -f docker-compose.rabbitmq.yaml -f docker-compose.redis.yaml -f docker-compose.tester.yaml
 
 
 .PHONY: all

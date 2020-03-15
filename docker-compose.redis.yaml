@@ -1,0 +1,10 @@
+version: '2.1'
+services:
+
+  #
+  # Redis cache service
+  #
+  redis:
+    image: redis:5.0-alpine
+    ports:
+    - '6379:6379'
