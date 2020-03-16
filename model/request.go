@@ -1,5 +1,10 @@
 package model
 
+// BeginTransaction is the begin transaction message
+type BeginTransaction struct {
+	Request BeginTransactionRequest `json:"request"`
+}
+
 // BeginTransactionRequest is the begin transaction request object
 type BeginTransactionRequest struct {
 	Tenant                string `json:"tenant"`
@@ -9,6 +14,11 @@ type BeginTransactionRequest struct {
 	Source                string `json:"source"`
 	Destination           string `json:"destination"`
 	TimestampBegin        string `json:"timestamp_begin"`
+}
+
+// EndTransaction is the begin transaction message
+type EndTransaction struct {
+	Request EndTransactionRequest `json:"request"`
 }
 
 // EndTransactionRequest is the begin transaction request object

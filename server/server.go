@@ -39,12 +39,22 @@ func NewUDPServer() *UDPServer {
 	listen := config.Config.GetString(dconfig.SettingListen)
 	messagebusURI := config.Config.GetString(dconfig.SettingMessageBusURI)
 	stateManagerType := config.Config.GetString(dconfig.SettingStateManager)
+	redisAddress := config.Config.GetString(dconfig.SettingRedisAddress)
+	redisPassword := config.Config.GetString(dconfig.SettingRedisPassword)
+	redisDb := config.Config.GetInt(dconfig.SettingRedisDb)
+	return newUDPServerWithConfig(
+		listen,
+		messagebusURI,
+		stateManagerType,
+		redisAddress,
+		redisPassword,
+		redisDb,
+	)
+}
 
+func newUDPServerWithConfig(listen, messagebusURI, stateManagerType, redisAddress, redisPassword string, redisDb int) *UDPServer {
 	var stateManager state.ManagerInterface
 	if stateManagerType == dconfig.StateManagerRedis {
-		redisAddress := config.Config.GetString(dconfig.SettingRedisAddress)
-		redisPassword := config.Config.GetString(dconfig.SettingRedisPassword)
-		redisDb := config.Config.GetInt(dconfig.SettingRedisDb)
 		stateManager = state.NewRedisManager(redisAddress, redisPassword, redisDb)
 	} else {
 		stateManager = state.NewMemoryManager()
@@ -67,10 +77,6 @@ func (s *UDPServer) setListen(listen string) {
 	s.listen = listen
 }
 
-func (s *UDPServer) setProcessor(p processor.HEPProcessorInterface) {
-	s.processor = p
-}
-
 func (s *UDPServer) setClient(c rabbitmq.ClientInterface) {
 	s.client = c
 }
@@ -79,6 +85,12 @@ func (s *UDPServer) setClient(c rabbitmq.ClientInterface) {
 func (s *UDPServer) Start() error {
 	ctx := context.Background()
 	l := log.FromContext(ctx)
+
+	if err := s.state.Connect(ctx); err != nil {
+		l.Error(err)
+		return err
+	}
+	defer s.state.Close(ctx)
 
 	if err := s.client.Connect(ctx); err != nil {
 		l.Error(err)
