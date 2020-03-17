@@ -10,6 +10,7 @@ import (
 	"github.com/canyanio/rating-agent-hep/client/rabbitmq"
 	dconfig "github.com/canyanio/rating-agent-hep/config"
 	"github.com/canyanio/rating-agent-hep/processor"
+	"github.com/canyanio/rating-agent-hep/state"
 )
 
 // UDPServerInterface is the interface for Server objects
@@ -20,6 +21,7 @@ type UDPServerInterface interface {
 // UDPServer is the UDP server
 type UDPServer struct {
 	processor processor.HEPProcessorInterface
+	state     state.ManagerInterface
 	client    rabbitmq.ClientInterface
 	listen    string
 	quit      chan interface{}
@@ -34,14 +36,38 @@ type packet struct {
 
 // NewUDPServer initializes a new UDP server
 func NewUDPServer() *UDPServer {
-	messagebusURI := config.Config.GetString(dconfig.SettingMessageBusURI)
 	listen := config.Config.GetString(dconfig.SettingListen)
+	messagebusURI := config.Config.GetString(dconfig.SettingMessageBusURI)
+	stateManagerType := config.Config.GetString(dconfig.SettingStateManager)
+	redisAddress := config.Config.GetString(dconfig.SettingRedisAddress)
+	redisPassword := config.Config.GetString(dconfig.SettingRedisPassword)
+	redisDb := config.Config.GetInt(dconfig.SettingRedisDb)
+	return newUDPServerWithConfig(
+		listen,
+		messagebusURI,
+		stateManagerType,
+		redisAddress,
+		redisPassword,
+		redisDb,
+	)
+}
+
+func newUDPServerWithConfig(listen, messagebusURI, stateManagerType, redisAddress, redisPassword string, redisDb int) *UDPServer {
+	var stateManager state.ManagerInterface
+	if stateManagerType == dconfig.StateManagerRedis {
+		stateManager = state.NewRedisManager(redisAddress, redisPassword, redisDb)
+	} else {
+		stateManager = state.NewMemoryManager()
+	}
+
 	quit := make(chan interface{})
-	p := processor.NewHEPProcessor()
-	c := rabbitmq.NewClient(messagebusURI)
+	processor := processor.NewHEPProcessor()
+	client := rabbitmq.NewClient(messagebusURI)
+
 	return &UDPServer{
-		processor: p,
-		client:    c,
+		processor: processor,
+		client:    client,
+		state:     stateManager,
 		quit:      quit,
 		listen:    listen,
 	}
@@ -49,10 +75,6 @@ func NewUDPServer() *UDPServer {
 
 func (s *UDPServer) setListen(listen string) {
 	s.listen = listen
-}
-
-func (s *UDPServer) setProcessor(p processor.HEPProcessorInterface) {
-	s.processor = p
 }
 
 func (s *UDPServer) setClient(c rabbitmq.ClientInterface) {
@@ -64,7 +86,12 @@ func (s *UDPServer) Start() error {
 	ctx := context.Background()
 	l := log.FromContext(ctx)
 
-	l.Infof("Connecting to message bus: %s", s.client.GetMessageBusURI())
+	if err := s.state.Connect(ctx); err != nil {
+		l.Error(err)
+		return err
+	}
+	defer s.state.Close(ctx)
+
 	if err := s.client.Connect(ctx); err != nil {
 		l.Error(err)
 		return err
@@ -111,4 +138,7 @@ func (s *UDPServer) Start() error {
 // Stop stops the UDP server
 func (s *UDPServer) Stop() {
 	close(s.quit)
+
+	ctx := context.Background()
+	s.client.Close(ctx)
 }

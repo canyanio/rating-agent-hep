@@ -1,0 +1,15 @@
+version: '2.1'
+volumes:
+    mongodb_data: {}
+
+services:
+
+  #
+  # mongodb
+  #
+  mongodb:
+    image: 'bitnami/mongodb:4.0'
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/opt/mongodb

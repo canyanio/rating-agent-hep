@@ -21,8 +21,10 @@ func TestProcess(t *testing.T) {
 	path := filepath.Join(cwd, "..", "testdata", "hep-invite.bin")
 	packet, _ := ioutil.ReadFile(path)
 
-	_, err := srv.Process(packet)
+	msg, err := srv.Process(packet)
 	assert.Nil(t, err)
+	assert.NotNil(t, msg)
+	assert.Equal(t, "INVITE", string(msg.Req.Method))
 }
 
 func TestProcessInvalid(t *testing.T) {
@@ -30,8 +32,9 @@ func TestProcessInvalid(t *testing.T) {
 
 	packet := []byte{}
 
-	_, err := srv.Process(packet)
+	msg, err := srv.Process(packet)
 	assert.Error(t, err)
+	assert.Nil(t, msg)
 }
 
 func TestHepFromBytesInvalid(t *testing.T) {

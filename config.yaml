@@ -4,11 +4,42 @@
 
 # listen: :9060
 
+
 # Message bus URI
 # Defauls to: "amqp://user:password@localhost:5672//"
 # Overwrite with environment variable: RATING_AGENT_HEP_MESSAGE_BUS_URI
 
 # message_bus_uri: amqp://user:password@localhost:5672//
+
+
+# State manager
+# Defauls to: "memory"
+# Possible values: "memory", "redis"
+# Overwrite with environment variable: RATING_AGENT_HEP_STATE_MANAGER
+
+# state_manager: memory
+
+
+# Redis address
+# Defauls to: "localhost:6379"
+# Overwrite with environment variable: RATING_AGENT_HEP_REDIS_ADDRESS
+
+# redis_address: localhost:6379
+
+
+# Redis password
+# Defauls to: ""
+# Overwrite with environment variable: RATING_AGENT_HEP_REDIS_PASSWORD
+
+# redis_password: ""
+
+
+# Redis database number
+# Defauls to: 0
+# Overwrite with environment variable: RATING_AGENT_HEP_REDIS_DB
+
+# redis_db: 0
+
 
 # Tenant
 # Defauls to: "default"
