@@ -34,8 +34,8 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 		return
 	}
 
-	requestMethod := string(msg.FirstMethod)
-	callID := string(msg.CallID)
+	requestMethod := msg.FirstMethod
+	callID := msg.CallID
 	CSeqParts := strings.SplitN(msg.Cseq.Val, " ", 2)
 	CSeqID := CSeqParts[0]
 	l.Debugf("method: %s, call-id: %s", requestMethod, callID)
