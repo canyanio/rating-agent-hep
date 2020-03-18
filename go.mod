@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/go-redis/redis/v7 v7.2.0
-	github.com/marv2097/siprocket v0.0.0-20190829114445-b2fe8c7d1589
 	github.com/mendersoftware/go-lib-micro v0.0.0-20200205133950-a5eb0bc64551
 	github.com/pkg/errors v0.9.1
 	github.com/sipcapture/heplify-server v0.0.0-20200309180217-ea033097697e

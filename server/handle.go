@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/mendersoftware/go-lib-micro/config"
@@ -33,8 +34,10 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 		return
 	}
 
-	requestMethod := string(msg.Req.Method)
-	callID := string(msg.CallId.Value)
+	requestMethod := string(msg.FirstMethod)
+	callID := string(msg.CallID)
+	CSeqParts := strings.SplitN(msg.Cseq.Val, " ", 2)
+	CSeqID := CSeqParts[0]
 	l.Debugf("method: %s, call-id: %s", requestMethod, callID)
 
 	var routingKey string
@@ -43,12 +46,12 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 		call := &model.Call{
 			Tenant:                config.Config.GetString(dconfig.SettingTenant),
 			TransactionTag:        callID,
-			AccountTag:            string(msg.From.User),
-			DestinationAccountTag: string(msg.To.User),
-			Source:                "sip:" + string(msg.From.User) + "@" + string(msg.From.Host),
-			Destination:           "sip:" + string(msg.To.User) + "@" + string(msg.To.Host),
+			AccountTag:            msg.FromUser,
+			DestinationAccountTag: msg.ToUser,
+			Source:                "sip:" + msg.FromUser + "@" + msg.FromHost,
+			Destination:           "sip:" + msg.ToUser + "@" + msg.ToHost,
 			TimestampInvite:       msg.Timestamp,
-			CSeq:                  string(msg.Cseq.Id),
+			CSeq:                  CSeqID,
 		}
 		s.state.Set(ctx, callID, call, StateManagerTTLInvite)
 	} else if requestMethod == MethodAck {
@@ -59,7 +62,8 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 			return
 		}
 
-		if string(msg.Cseq.Id) == call.CSeq && call.TimestampAck.IsZero() {
+		if CSeqID == call.CSeq && call.TimestampAck.IsZero() &&
+			(call.AccountTag != "" || call.DestinationAccountTag != "") {
 			call.TimestampAck = msg.Timestamp
 			s.state.Set(ctx, call.TransactionTag, call, StateManagerTTLCall)
 
@@ -84,8 +88,8 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 			Request: model.EndTransactionRequest{
 				Tenant:                config.Config.GetString(dconfig.SettingTenant),
 				TransactionTag:        callID,
-				AccountTag:            string(msg.From.User),
-				DestinationAccountTag: string(msg.To.User),
+				AccountTag:            msg.FromUser,
+				DestinationAccountTag: msg.ToUser,
 				TimestampEnd:          msg.Timestamp.Format(time.RFC3339),
 			},
 		}
