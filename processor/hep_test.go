@@ -24,7 +24,7 @@ func TestProcess(t *testing.T) {
 	msg, err := srv.Process(packet)
 	assert.Nil(t, err)
 	assert.NotNil(t, msg)
-	assert.Equal(t, "INVITE", string(msg.Req.Method))
+	assert.Equal(t, "INVITE", string(msg.FirstMethod))
 }
 
 func TestProcessInvalid(t *testing.T) {
