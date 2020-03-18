@@ -43,7 +43,7 @@ clean:
 
 .PHONY: docker-build
 docker-build:
-	docker build . -t canyan/rating-agent-hep
+	docker build . -t canyan/rating-agent-hep:master
 
 .PHONY: docker-start
 docker-start:
