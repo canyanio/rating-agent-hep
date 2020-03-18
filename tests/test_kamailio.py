@@ -5,10 +5,11 @@ from canyantester import canyantester
 
 
 TARGET = os.environ.get('TARGET', 'kamailio:5060')
+API_URL = os.environ.get('API_URL', 'http://rating-api:8000')
 
 
 def test_kamailio_call():
     base_dir = os.path.dirname(__file__)
     scenario_file = os.path.join(base_dir, 'scenarios', 'test_kamailio_call.yaml')
-    result = CliRunner().invoke(canyantester, ['-t', TARGET, scenario_file])
+    result = CliRunner().invoke(canyantester, ['-a', API_URL, '-t', TARGET, scenario_file])
     assert result.exit_code == 0
