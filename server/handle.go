@@ -62,7 +62,8 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 			return
 		}
 
-		if CSeqID == call.CSeq && call.TimestampAck.IsZero() {
+		if CSeqID == call.CSeq && call.TimestampAck.IsZero() &&
+			(call.AccountTag != "" || call.DestinationAccountTag != "") {
 			call.TimestampAck = msg.Timestamp
 			s.state.Set(ctx, call.TransactionTag, call, StateManagerTTLCall)
 

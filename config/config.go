@@ -46,6 +46,15 @@ const (
 	SettingTenant = "tenant"
 	// SettingTenantDefault is the default value for the tenant
 	SettingTenantDefault = "default"
+
+	// SettingSIPHeaderCaller is the SIP header used to extract identity of the caller
+	SettingSIPHeaderCaller = "sip_header_caller"
+
+	// SettingSIPHeaderCallee is the SIP header used to extract identity of the callee
+	SettingSIPHeaderCallee = "sip_header_callee"
+
+	// SettingSIPLocalDomains is a comma separated list of local domains
+	SettingSIPLocalDomains = "sip_local_domains"
 )
 
 var (
