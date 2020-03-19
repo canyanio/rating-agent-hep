@@ -70,7 +70,7 @@ func TestUDPServerStart(t *testing.T) {
 		}),
 		rabbitmq.QueueNameBeginTransaction,
 		mock.MatchedBy(func(req *model.BeginTransaction) bool {
-			assert.Equal(t, "2020-03-14T09:56:08+01:00", req.Request.TimestampBegin)
+			assert.Equal(t, "2020-03-14T08:56:08Z", req.Request.TimestampBegin)
 
 			return true
 		}),
@@ -81,7 +81,7 @@ func TestUDPServerStart(t *testing.T) {
 		}),
 		rabbitmq.QueueNameEndTransaction,
 		mock.MatchedBy(func(req *model.EndTransaction) bool {
-			assert.Equal(t, "2020-03-14T09:56:09+01:00", req.Request.TimestampEnd)
+			assert.Equal(t, "2020-03-14T08:56:09Z", req.Request.TimestampEnd)
 
 			return true
 		}),

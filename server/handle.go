@@ -99,7 +99,7 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 					DestinationAccountTag: call.DestinationAccountTag,
 					Source:                call.Source,
 					Destination:           call.Destination,
-					TimestampBegin:        msg.Timestamp.Format(time.RFC3339),
+					TimestampBegin:        msg.Timestamp.UTC().Format(time.RFC3339),
 				},
 			}
 
@@ -122,7 +122,7 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 				TransactionTag:        callID,
 				AccountTag:            msg.FromUser,
 				DestinationAccountTag: msg.ToUser,
-				TimestampEnd:          msg.Timestamp.Format(time.RFC3339),
+				TimestampEnd:          msg.Timestamp.UTC().Format(time.RFC3339),
 			},
 		}
 
