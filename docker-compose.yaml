@@ -6,11 +6,12 @@ services:
   #
   rating-agent-hep:
     image: 'canyan/rating-agent-hep:master'
-    command: ["--debug", "agent"]
     environment:
     - RATING_AGENT_HEP_MESSAGE_BUS_URI=amqp://user:password@rabbitmq:5672//
     - RATING_AGENT_HEP_REDIS_ADDRESS=redis:6379
     - RATING_AGENT_HEP_SIP_LOCAL_DOMAINS=sip.canyan.io
+    volumes:
+      - "./:/src/"
     depends_on:
     - rabbitmq
     - redis

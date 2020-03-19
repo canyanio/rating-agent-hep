@@ -59,7 +59,7 @@ setup:
 workers:
   - scenario: "test_kamailio_call.xml"
     number: 1
-    repeat: 2
+    repeat: 1
     timeout: 600
     call_rate: 1
     call_rate_period: 1000

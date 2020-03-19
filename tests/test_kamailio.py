@@ -1,6 +1,7 @@
 import os
 
 import requests
+import time
 
 from canyantester import canyantester
 from click.testing import CliRunner
@@ -18,14 +19,17 @@ def test_kamailio_call():
     )
     assert result.exit_code == 0
 
+    # wait two seconds for data consolidation
+    time.sleep(2)
+
     # verify transaction for account 1000
     with requests.post(
         API_URL + "/graphql",
         json={
             "query": """query {
-  data:allTransactions(page:1, perPage: 1, sortField:"timestamp_begin", sortOrder:"desc", filter:{
+    data:allTransactions(page:0, perPage: 1, sortField:"timestamp_begin", sortOrder:"desc", filter:{
     account_tag:"1000"
-  }) {
+    }) {
     tenant
     account_tag
     source
@@ -35,28 +39,25 @@ def test_kamailio_call():
     failed_reason
     duration
     fee
-  }
+    }
 }"""
         },
     ) as resp:
         data = resp.json()
-        assert data == {
-            "data": {
-                "data": [
-                    {
-                        "tenant": "default",
-                        "account_tag": "1000",
-                        "source": "sip:1000@sip.canyan.io",
-                        "destination": "sip:1001@sip.canyan.io",
-                        "inbound": False,
-                        "failed": False,
-                        "failed_reason": "",
-                        "duration": 1,
-                        "fee": 0,
-                    }
-                ]
-            },
-            "errors": None,
+        assert data.get("data") == {
+            "data": [
+                {
+                    "tenant": "default",
+                    "account_tag": "1000",
+                    "source": "sip:1000@sip.canyan.io",
+                    "destination": "sip:1001@sip.canyan.io",
+                    "inbound": False,
+                    "failed": False,
+                    "failed_reason": "",
+                    "duration": 1,
+                    "fee": 0,
+                }
+            ]
         }
 
     # verify transaction for account 1001
@@ -64,9 +65,9 @@ def test_kamailio_call():
         API_URL + "/graphql",
         json={
             "query": """query {
-  data:allTransactions(page:1, perPage: 1, sortField:"timestamp_begin", sortOrder:"desc", filter:{
+    data:allTransactions(page:0, perPage: 1, sortField:"timestamp_begin", sortOrder:"desc", filter:{
     account_tag:"1001"
-  }) {
+    }) {
     tenant
     account_tag
     source
@@ -76,26 +77,23 @@ def test_kamailio_call():
     failed_reason
     duration
     fee
-  }
+    }
 }"""
         },
     ) as resp:
         data = resp.json()
-        assert data == {
-            "data": {
-                "data": [
-                    {
-                        "tenant": "default",
-                        "account_tag": "1001",
-                        "source": "sip:1000@sip.canyan.io",
-                        "destination": "sip:1001@sip.canyan.io",
-                        "inbound": True,
-                        "failed": False,
-                        "failed_reason": "",
-                        "duration": 1,
-                        "fee": 0,
-                    }
-                ]
-            },
-            "errors": None,
+        assert data.get("data") == {
+            "data": [
+                {
+                    "tenant": "default",
+                    "account_tag": "1001",
+                    "source": "sip:1000@sip.canyan.io",
+                    "destination": "sip:1001@sip.canyan.io",
+                    "inbound": True,
+                    "failed": False,
+                    "failed_reason": "",
+                    "duration": 1,
+                    "fee": 0,
+                }
+            ]
         }

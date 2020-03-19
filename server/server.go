@@ -3,9 +3,12 @@ package server
 import (
 	"context"
 	"net"
+	"os"
+	"os/signal"
 
 	"github.com/mendersoftware/go-lib-micro/config"
 	"github.com/mendersoftware/go-lib-micro/log"
+	"golang.org/x/sys/unix"
 
 	"github.com/canyanio/rating-agent-hep/client/rabbitmq"
 	dconfig "github.com/canyanio/rating-agent-hep/config"
@@ -24,7 +27,7 @@ type UDPServer struct {
 	state     state.ManagerInterface
 	client    rabbitmq.ClientInterface
 	listen    string
-	quit      chan interface{}
+	quit      chan os.Signal
 }
 
 // UDP packet received by the UDP server
@@ -60,9 +63,11 @@ func newUDPServerWithConfig(listen, messagebusURI, stateManagerType, redisAddres
 		stateManager = state.NewMemoryManager()
 	}
 
-	quit := make(chan interface{})
+	quit := make(chan os.Signal)
 	processor := processor.NewHEPProcessor()
 	client := rabbitmq.NewClient(messagebusURI)
+
+	signal.Notify(quit, unix.SIGINT, unix.SIGTERM)
 
 	return &UDPServer{
 		processor: processor,

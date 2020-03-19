@@ -73,7 +73,7 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 	} else if requestMethod == MethodAck {
 		var call model.Call
 		err := s.state.Get(ctx, callID, &call)
-		if err != nil {
+		if err != nil || call.CSeq == "" {
 			l.WithFields(logrus.Fields{
 				"req-id":  reqID,
 				"source":  addr.String(),

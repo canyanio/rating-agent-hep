@@ -1,0 +1,26 @@
+FROM golang:1.13.5-alpine3.10 as builder
+RUN apk update && apk upgrade && \
+    apk add \
+    xz-dev \
+    musl-dev \
+    gcc
+RUN mkdir -p /go/src/github.com/canyanio/rating-agent-hep
+COPY . /go/src/github.com/canyanio/rating-agent-hep
+RUN cd /go/src/github.com/canyanio/rating-agent-hep && \
+    env CGO_ENABLED=0 go test -c -o rating-agent-hep-test -coverpkg $(go list ./... | grep -v vendor | grep -v mocks | grep -v test | tr  '\n' ,)
+
+FROM alpine:3.10
+RUN apk update && apk upgrade && \
+        apk add --no-cache ca-certificates xz
+RUN mkdir -p /etc/rating-agent-hep
+COPY ./config.yaml /etc/rating-agent-hep
+COPY --from=builder /go/src/github.com/canyanio/rating-agent-hep/rating-agent-hep-test /usr/bin
+ENTRYPOINT [ \
+    "/usr/bin/rating-agent-hep-test", \
+    "-test.coverprofile=/src/coverage-acceptance.txt", \
+    "-acceptance-tests", \
+    "-test.run=TestRunMain", \
+    "-cli-args=--config=/etc/rating-agent-hep/config.yaml --debug agent" \
+]
+
+EXPOSE 9060/udp
