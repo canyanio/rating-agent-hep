@@ -18,6 +18,7 @@ import (
 	"github.com/canyanio/rating-agent-hep/client/rabbitmq"
 	mock_rabbitmq "github.com/canyanio/rating-agent-hep/client/rabbitmq/mock"
 	dconfig "github.com/canyanio/rating-agent-hep/config"
+	"github.com/canyanio/rating-agent-hep/model"
 )
 
 func getFreeUDPPort() (int, error) {
@@ -68,14 +69,22 @@ func TestUDPServerStart(t *testing.T) {
 			return true
 		}),
 		rabbitmq.QueueNameBeginTransaction,
-		mock.AnythingOfType("*model.BeginTransaction"),
+		mock.MatchedBy(func(req *model.BeginTransaction) bool {
+			assert.Equal(t, "2020-03-14T09:56:08+01:00", req.Request.TimestampBegin)
+
+			return true
+		}),
 	).Return(nil)
 	mockClient.On("Publish",
 		mock.MatchedBy(func(_ context.Context) bool {
 			return true
 		}),
 		rabbitmq.QueueNameEndTransaction,
-		mock.AnythingOfType("*model.EndTransaction"),
+		mock.MatchedBy(func(req *model.EndTransaction) bool {
+			assert.Equal(t, "2020-03-14T09:56:09+01:00", req.Request.TimestampEnd)
+
+			return true
+		}),
 	).Return(nil)
 
 	// new UDP server with mocked client

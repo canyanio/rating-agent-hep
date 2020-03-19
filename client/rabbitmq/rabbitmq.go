@@ -41,14 +41,14 @@ func NewClient(messageBusURI string) *Client {
 func (c *Client) Connect(ctx context.Context) error {
 	l := log.FromContext(ctx)
 
-	l.Infof("Connecting to message bus: %s", c.messageBusURI)
+	l.Debugf("Connecting to message bus: %s", c.messageBusURI)
 	connection, err := amqp.Dial(c.messageBusURI)
 	if err != nil {
 		return errors.Wrap(err, "unable to connect to the message bus")
 	}
 	c.connection = connection
 
-	l.Info("Creating the message bus channel")
+	l.Debug("Creating the message bus channel")
 	channel, err := connection.Channel()
 	if err != nil {
 		return errors.Wrap(err, "unable to create the channel")
@@ -56,7 +56,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	c.channel = channel
 
 	for _, queue := range []string{QueueNameBeginTransaction, QueueNameEndTransaction} {
-		l.Infof("Declaring the message bus queue: %s", queue)
+		l.Debugf("Declaring the message bus queue: %s", queue)
 		if _, err := channel.QueueDeclare(
 			queue, // name
 			false, // durable

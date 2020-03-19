@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/mendersoftware/go-lib-micro/log"
 	"github.com/urfave/cli"
 
 	"github.com/canyanio/rating-agent-hep/config"
@@ -15,6 +16,7 @@ func main() {
 
 func doMain(args []string) {
 	var configPath string
+	var configDebug bool
 
 	app := &cli.App{
 		Flags: []cli.Flag{
@@ -23,6 +25,11 @@ func doMain(args []string) {
 				Usage:       "Configuration `FILE`. Supports JSON, TOML, YAML and HCL formatted configs.",
 				Value:       "config.yaml",
 				Destination: &configPath,
+			},
+			&cli.BoolFlag{
+				Name:        "debug",
+				Usage:       "Enable debug mode and verbose logging",
+				Destination: &configDebug,
 			},
 		},
 		Commands: []cli.Command{
@@ -43,6 +50,9 @@ func doMain(args []string) {
 		if err != nil {
 			return cli.NewExitError(err.Error(), 1)
 		}
+
+		log.Setup(configDebug)
+
 		return nil
 	}
 
