@@ -20,8 +20,7 @@ type SIPMessage struct {
 
 // SIPMessageFromHEP returns a HEPMessage from a decoded HEP packet
 func SIPMessageFromHEP(hep *decoder.HEP) *SIPMessage {
-	timestamp := time.Unix(0, int64(hep.GetTsec())*int64(time.Second)+int64(hep.GetTmsec())*int64(time.Millisecond))
-	return parseSIPMessage(hep.Payload, timestamp)
+	return parseSIPMessage(hep.Payload, hep.Timestamp)
 }
 
 func stringInSlice(a string, list []string) bool {

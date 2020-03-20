@@ -1,7 +1,65 @@
+
+setup:
+  - type: api
+    uri: /graphql
+    method: POST
+    payload:
+      query: |
+        mutation {
+          a1:upsertAccount(
+            name: "Fabio",
+            account_tag: "1000",
+            type: PREPAID,
+            balance: 1000000,
+            active: true,
+            max_concurrent_transactions: 100
+          ) {
+            id
+          }
+          a2:upsertAccount(
+            name: "Alex",
+            account_tag: "1001",
+            type: PREPAID,
+            balance: 1000000,
+            active: true,
+            max_concurrent_transactions: 100
+          ) {
+            id
+          }
+          upsertCarrier(
+            carrier_tag: "carrier",
+            active: true,
+            protocol: UDP,
+            host: "carrier",
+            port: 5060
+          ) {
+            id
+          }
+          upsertPricelist(
+            pricelist_tag: "pricelist",
+            currency:EUR
+          ) {
+            id
+          }
+          upsertPricelistRate(
+            carrier_tag: "carrier",
+            pricelist_tag: "pricelist",
+            prefix: "sip:39",
+            active: true,
+            description: "pricelist rate",
+            rate: 1,
+            rate_increment: 1,
+            connect_fee: 0,
+            interval_start: 0
+          ) {
+            id
+          }
+        }
+
 workers:
   - scenario: "test_kamailio_call.xml"
     number: 1
-    repeat: 2
+    repeat: 1
     timeout: 600
     call_rate: 1
     call_rate_period: 1000
@@ -9,6 +67,9 @@ workers:
     call_number: 1
     values:
       call_duration: 1000
-      to_user: "39040123456"
-      to_domain: "anotherdomain.com"
+      from_user: "1000"
+      from_domain: "sip.canyan.io"
+      from_port: "5060"
+      to_user: "1001"
+      to_domain: "sip.canyan.io"
       to_port: "5060"

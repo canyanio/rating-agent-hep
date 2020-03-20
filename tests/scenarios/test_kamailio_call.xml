@@ -8,11 +8,12 @@
 
       INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
       Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-      From: sipp <sip:1000@[local_ip]:[local_port]>;tag=[call_number]
+      From: sipp <sip:%(from_user)s@%(from_domain)s:%(from_port)s>;tag=[call_number]
       To: sut <sip:%(to_user)s@%(to_domain)s:%(to_port)s>
       Call-ID: [call_id]
       CSeq: 1 INVITE
-      Contact: sip:1000@[local_ip]:[local_port]
+      Contact: sip:%(from_user)s@%(from_domain)s:%(from_port)s
+      P-Asserted-Identity: <sip:%(from_user)s@sip.canyan.io>
       Max-Forwards: 70
       Subject: Test
       Content-Type: application/sdp
@@ -43,7 +44,7 @@
     [routes]
     [last_Call-ID:]
     CSeq: [cseq] ACK
-    Contact: <sip:1000@[local_ip]:[local_port];transport=[transport]>
+    Contact: <sip:%(from_user)s@%(from_domain)s:%(from_port)s;transport=[transport]>
     Max-Forwards: 70
     Subject: Test
     Content-Length: 0

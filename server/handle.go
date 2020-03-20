@@ -6,9 +6,11 @@ import (
 	"strings"
 	"time"
 
+	uuid "github.com/google/uuid"
 	"github.com/mendersoftware/go-lib-micro/config"
 	"github.com/mendersoftware/go-lib-micro/log"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/canyanio/rating-agent-hep/client/rabbitmq"
 	dconfig "github.com/canyanio/rating-agent-hep/config"
@@ -25,20 +27,25 @@ const (
 )
 
 func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr, packet []byte) {
+	reqID := uuid.New()
+
 	l := log.FromContext(ctx)
-	l.Debugf("received a new packet from %v, length %d bytes", addr.String(), len(packet))
 
 	msg, err := s.processor.Process(packet)
 	if err != nil {
 		l.Error(errors.Wrap(err, "unable to decode the HEP package"))
+		l.WithFields(logrus.Fields{
+			"req-id": reqID,
+			"source": addr.String(),
+			"length": len(packet),
+		}).Error("unable to decode the HEP package")
 		return
 	}
 
-	requestMethod := string(msg.FirstMethod)
-	callID := string(msg.CallID)
+	requestMethod := msg.FirstMethod
+	callID := msg.CallID
 	CSeqParts := strings.SplitN(msg.Cseq.Val, " ", 2)
 	CSeqID := CSeqParts[0]
-	l.Debugf("method: %s, call-id: %s", requestMethod, callID)
 
 	var routingKey string
 	var req interface{}
@@ -54,11 +61,27 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 			CSeq:                  CSeqID,
 		}
 		s.state.Set(ctx, callID, call, StateManagerTTLInvite)
+
+		l.WithFields(logrus.Fields{
+			"req-id":  reqID,
+			"source":  addr.String(),
+			"length":  len(packet),
+			"method":  requestMethod,
+			"call-id": callID,
+			"ts":      msg.Timestamp,
+		}).Debug("call status set in the state manager, waiting for the ACK")
 	} else if requestMethod == MethodAck {
 		var call model.Call
 		err := s.state.Get(ctx, callID, &call)
-		if err != nil {
-			l.Error(errors.Wrapf(err, "unable to retrieve status for Call-Id: %s", callID))
+		if err != nil || call.CSeq == "" {
+			l.WithFields(logrus.Fields{
+				"req-id":  reqID,
+				"source":  addr.String(),
+				"length":  len(packet),
+				"method":  requestMethod,
+				"call-id": callID,
+				"ts":      msg.Timestamp,
+			}).Error("unable to retrieve the status status, INVITE has not been received for this calls")
 			return
 		}
 
@@ -76,9 +99,18 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 					DestinationAccountTag: call.DestinationAccountTag,
 					Source:                call.Source,
 					Destination:           call.Destination,
-					TimestampBegin:        msg.Timestamp.Format(time.RFC3339),
+					TimestampBegin:        msg.Timestamp.UTC().Format(time.RFC3339),
 				},
 			}
+
+			l.WithFields(logrus.Fields{
+				"req-id":  reqID,
+				"source":  addr.String(),
+				"length":  len(packet),
+				"method":  requestMethod,
+				"call-id": callID,
+				"ts":      msg.Timestamp,
+			}).Debug("call start detected: begin transaction")
 		}
 	} else if requestMethod == MethodBye {
 		s.state.Delete(ctx, callID)
@@ -90,15 +122,31 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 				TransactionTag:        callID,
 				AccountTag:            msg.FromUser,
 				DestinationAccountTag: msg.ToUser,
-				TimestampEnd:          msg.Timestamp.Format(time.RFC3339),
+				TimestampEnd:          msg.Timestamp.UTC().Format(time.RFC3339),
 			},
 		}
+
+		l.WithFields(logrus.Fields{
+			"req-id":  reqID,
+			"source":  addr.String(),
+			"length":  len(packet),
+			"method":  requestMethod,
+			"call-id": callID,
+			"ts":      msg.Timestamp,
+		}).Debug("call end detected: end transaction")
 	}
 
 	if req != nil {
 		err = s.client.Publish(ctx, routingKey, req)
 		if err != nil {
-			l.Error(errors.Wrap(err, "unable to publish the request"))
+			l.WithFields(logrus.Fields{
+				"req-id":  reqID,
+				"source":  addr.String(),
+				"length":  len(packet),
+				"method":  requestMethod,
+				"call-id": callID,
+			}).Error("unable to publish the request")
+
 			return
 		}
 	}

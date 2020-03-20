@@ -13,5 +13,7 @@
 .*.swp
 
 coverage.txt
+coverage-acceptance.txt
 /bin/
-.vscode/
+/venv/
+/.vscode/

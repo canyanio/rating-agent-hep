@@ -11,12 +11,12 @@ before_script:
   - export SERVICE_IMAGE=$DOCKER_REPOSITORY:$DOCKER_TAG
   - export COMMIT_TAG="$CI_COMMIT_REF_SLUG"_"$CI_COMMIT_SHA"
 
-test:
+test:unit:
+  stage: test
   services:
     - redis:5.0-alpine
   variables:
     RATING_AGENT_HEP_REDIS_ADDRESS: "redis:6379"
-  stage: test
   script:
     - apk add build-base gcc musl-dev xz-dev make
     - go get -u golang.org/x/lint/golint
@@ -28,9 +28,35 @@ test:
     paths:
       - unit-coverage.tar
 
+test:acceptance:
+  stage: test
+  image: tiangolo/docker-with-compose
+  services:
+    - docker:19.03.5-dind
+  before_script:
+    - make docker-build-acceptance
+    # start rabbitmq, which takes time to initialize
+    - docker-compose -f docker-compose.rabbitmq.yaml up -d rabbitmq
+    - for i in `seq 1 60`; do docker-compose -f docker-compose.rabbitmq.yaml exec -T rabbitmq rabbitmqctl await_online_nodes 1 && break || true; sleep 5; done
+    - sleep 5
+    # rabbitmq is ready, start all the other services
+    - make docker-start
+    - echo "Waiting for all the services to fully start up..."
+    - sleep 5
+  script:
+    - make docker-test
+    - make docker-logs
+    - make docker-stop
+    - mkdir -p tests/acceptance-coverage && find . -name 'coverage-acceptance.txt' -exec cp --parents {} ./tests/acceptance-coverage \;
+    - tar -cvf $CI_PROJECT_DIR/acceptance-coverage.tar tests/acceptance-coverage
+  artifacts:
+    expire_in: 2w
+    paths:
+      - acceptance-coverage.tar
+
 build:
-  image: docker
   stage: build
+  image: docker
   services:
     - docker:dind
   script:
@@ -45,19 +71,22 @@ build:
     - docker
 
 publish:tests:
-  image: alpine
   stage: publish
+  image: alpine
   before_script:
     - apk add --no-cache bash curl findutils git
   dependencies:
-    - test
+    - test:unit
+    - test:acceptance
   script:
     - tar -xvf unit-coverage.tar
-    - bash -c "bash <(curl -s https://codecov.io/bash) -Z -s ./tests/unit-coverage"
+    - tar -xvf acceptance-coverage.tar
+    - bash -c "bash <(curl -s https://codecov.io/bash) -Z -F unit -s ./tests/unit-coverage"
+    - bash -c "bash <(curl -s https://codecov.io/bash) -Z -F acceptance -s ./tests/acceptance-coverage"
 
 publish:build:
-  image: docker
   stage: publish
+  image: docker
   only:
     - /^(master|[0-9]+\.[0-9]+\.x)$/
   services:

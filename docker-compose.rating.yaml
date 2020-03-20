@@ -15,6 +15,7 @@ services:
       - "8000:8000"
     depends_on:
       - mongodb
+    restart: always
 
   #
   # rating-agent
@@ -28,3 +29,4 @@ services:
     depends_on:
       - rating-api
       - rabbitmq
+    restart: always

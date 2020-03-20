@@ -43,7 +43,11 @@ clean:
 
 .PHONY: docker-build
 docker-build:
-	docker build . -t canyan/rating-agent-hep
+	docker build . -t canyan/rating-agent-hep:master
+
+.PHONY: docker-build-acceptance
+docker-build-acceptance:
+	docker build . -t canyan/rating-agent-hep:master -f Dockerfile.acceptance
 
 .PHONY: docker-start
 docker-start:
@@ -51,7 +55,7 @@ docker-start:
 
 .PHONY: docker-test
 docker-test:
-	docker exec rating-agent-hep_tester_1 pytest /tests/
+	docker exec rating-agent-hep_tester_1 pytest /tests/ -vv
 
 .PHONY: docker-logs
 docker-logs:
