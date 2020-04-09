@@ -92,8 +92,6 @@ check:
             inbound
             failed
             failed_reason
-            duration
-            fee
           }
         }
     expected_response: |
@@ -106,9 +104,7 @@ check:
             "destination": "sip:2001@sip.canyan.io",
             "inbound": false,
             "failed": false,
-            "failed_reason": "",
-            "duration": 1,
-            "fee": 0
+            "failed_reason": ""
           }]
         }
       }
@@ -128,8 +124,6 @@ check:
             inbound
             failed
             failed_reason
-            duration
-            fee
           }
         }
     expected_response: |
@@ -142,9 +136,7 @@ check:
             "destination": "sip:2001@sip.canyan.io",
             "inbound": true,
             "failed": false,
-            "failed_reason": "",
-            "duration": 1,
-            "fee": 0
+            "failed_reason": ""
           }]
         }
       }

@@ -15,6 +15,6 @@ def test_opensips_call():
     base_dir = os.path.dirname(__file__)
     scenario_file = os.path.join(base_dir, "scenarios", "test_opensips_call.yaml")
     result = CliRunner().invoke(
-        canyantester, ["-a", API_URL, "-t", TARGET, scenario_file]
+        canyantester, ["--verbose", "-a", API_URL, "-t", TARGET, scenario_file]
     )
     assert result.exit_code == 0

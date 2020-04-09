@@ -28,31 +28,51 @@ test:unit:
     paths:
       - unit-coverage.tar
 
-test:acceptance:
+test:acceptance:kamailio:
   stage: test
   image: tiangolo/docker-with-compose
   services:
     - docker:19.03.5-dind
   before_script:
     - make docker-build-acceptance
-    # start rabbitmq, which takes time to initialize
-    - docker-compose -f docker-compose.rabbitmq.yaml up -d rabbitmq
-    - for i in `seq 1 60`; do docker-compose -f docker-compose.rabbitmq.yaml exec -T rabbitmq rabbitmqctl await_online_nodes 1 && break || true; sleep 5; done
-    - sleep 5
-    # rabbitmq is ready, start all the other services
-    - make docker-start
+    - make docker-start-kamailio
     - echo "Waiting for all the services to fully start up..."
-    - sleep 5
+    - sleep 10
   script:
-    - make docker-test
+    - make docker-test-kamailio
     - make docker-logs
     - make docker-stop
-    - mkdir -p tests/acceptance-coverage && find . -name 'coverage-acceptance.txt' -exec cp --parents {} ./tests/acceptance-coverage \;
-    - tar -cvf $CI_PROJECT_DIR/acceptance-coverage.tar tests/acceptance-coverage
+    - mkdir -p tests/kamailio-acceptance-coverage && find . -name 'coverage-acceptance.txt' -exec cp --parents {} ./tests/kamailio-acceptance-coverage \;
+    - tar -cvf $CI_PROJECT_DIR/kamailio-acceptance-coverage.tar tests/kamailio-acceptance-coverage
+  after_script:
+    - make docker-logs || true
   artifacts:
     expire_in: 2w
     paths:
-      - acceptance-coverage.tar
+      - kamailio-acceptance-coverage.tar
+
+test:acceptance:opensips:
+  stage: test
+  image: tiangolo/docker-with-compose
+  services:
+    - docker:19.03.5-dind
+  before_script:
+    - make docker-build-acceptance
+    - make docker-start-opensips
+    - echo "Waiting for all the services to fully start up..."
+    - sleep 10
+  script:
+    - make docker-test-opensips
+    - make docker-logs
+    - make docker-stop
+    - mkdir -p tests/opensips-acceptance-coverage && find . -name 'coverage-acceptance.txt' -exec cp --parents {} ./tests/opensips-acceptance-coverage \;
+    - tar -cvf $CI_PROJECT_DIR/opensips-acceptance-coverage.tar tests/opensips-acceptance-coverage
+  after_script:
+    - make docker-logs || true
+  artifacts:
+    expire_in: 2w
+    paths:
+      - opensips-acceptance-coverage.tar
 
 build:
   stage: build
@@ -77,12 +97,15 @@ publish:tests:
     - apk add --no-cache bash curl findutils git
   dependencies:
     - test:unit
-    - test:acceptance
+    - test:acceptance:kamailio
+    - test:acceptance:opensips
   script:
     - tar -xvf unit-coverage.tar
-    - tar -xvf acceptance-coverage.tar
     - bash -c "bash <(curl -s https://codecov.io/bash) -Z -F unit -s ./tests/unit-coverage"
-    - bash -c "bash <(curl -s https://codecov.io/bash) -Z -F acceptance -s ./tests/acceptance-coverage"
+    - tar -xvf kamailio-acceptance-coverage.tar
+    - bash -c "bash <(curl -s https://codecov.io/bash) -Z -F acceptancekamailio -s ./tests/kamailio-acceptance-coverage"
+    - tar -xvf opensips-acceptance-coverage.tar
+    - bash -c "bash <(curl -s https://codecov.io/bash) -Z -F acceptanceopensips -s ./tests/opensips-acceptance-coverage"
 
 publish:build:
   stage: publish

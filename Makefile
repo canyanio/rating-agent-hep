@@ -2,7 +2,7 @@ GO ?= go
 GOFMT ?= gofmt "-s"
 PACKAGES ?= $(shell $(GO) list ./...)
 GOFILES := $(shell find . -name "*.go" -type f -not -path './vendor/*')
-DOCKER_COMPOSE_FILES = -f docker-compose.yaml -f docker-compose.carrier.yaml -f docker-compose.kamailio.yaml -f docker-compose.opensips.yaml -f docker-compose.mongodb.yaml -f docker-compose.rabbitmq.yaml -f docker-compose.rating.yaml -f docker-compose.redis.yaml -f docker-compose.tester.yaml
+DOCKER_COMPOSE_FILES = -f docker-compose.yaml -f docker-compose.mongodb.yaml -f docker-compose.rabbitmq.yaml -f docker-compose.redis.yaml -f docker-compose.rating.yaml -f docker-compose.tester.yaml -f docker-compose.carrier.yaml
 
 
 .PHONY: all
@@ -51,19 +51,33 @@ docker-build-acceptance:
 
 .PHONY: docker-start
 docker-start:
+	docker-compose -f docker-compose.rabbitmq.yaml up -d rabbitmq
+	for i in `seq 1 60`; do docker-compose -f docker-compose.rabbitmq.yaml exec -T rabbitmq rabbitmqctl await_online_nodes 1 && break || true; sleep 5; done
+	sleep 5
 	docker-compose $(DOCKER_COMPOSE_FILES) up -d
 
-.PHONY: docker-test
-docker-test:
-	docker exec rating-agent-hep_tester_1 pytest /tests/ -vv
+.PHONY: docker-start-kamailio
+docker-start-kamailio:
+	make docker-start
+	docker-compose -f docker-compose.kamailio.yaml up -d
 
-.PHONY: docker-test-opensips
-docker-test-opensips:
-	docker exec rating-agent-hep_tester_1 pytest -k kamailio -vv
+.PHONY: docker-start-opensips
+docker-start-opensips:
+	make docker-start
+	docker-compose -f docker-compose.opensips.yaml up -d
 
 .PHONY: docker-test-kamailio
 docker-test-kamailio:
-	docker exec rating-agent-hep_tester_1 pytest -k opensips -vv
+	docker exec rating-agent-hep_tester_1 pytest -k kamailio /tests/ -vv
+
+.PHONY: docker-test-opensips
+docker-test-opensips:
+	docker exec rating-agent-hep_tester_1 pytest -k opensips /tests/ -vv
+
+.PHONY: docker-test
+docker-test:
+	make docker-test-kamailio
+	make docker-test-opensips
 
 .PHONY: docker-logs
 docker-logs:
@@ -72,4 +86,4 @@ docker-logs:
 
 .PHONY: docker-stop
 docker-stop:
-	docker-compose $(DOCKER_COMPOSE_FILES) down
+	docker-compose $(DOCKER_COMPOSE_FILES) -f docker-compose.kamailio.yaml -f docker-compose.opensips.yaml  down
