@@ -47,6 +47,15 @@ func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr
 	CSeqParts := strings.SplitN(msg.Cseq.Val, " ", 2)
 	CSeqID := CSeqParts[0]
 
+	l.WithFields(logrus.Fields{
+		"req-id":        reqID,
+		"source":        addr.String(),
+		"length":        len(packet),
+		"requestMethod": requestMethod,
+		"callID":        callID,
+		"CSeqID":        CSeqID,
+	}).Debug("received msg")
+
 	var routingKey string
 	var req interface{}
 	if requestMethod == MethodInvite {
