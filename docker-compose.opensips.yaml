@@ -1,0 +1,13 @@
+version: '2.1'
+services:
+
+  #
+  # opensips
+  #
+  opensips:
+    image: 'canyan/opensips:3.0.2'
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./tests/opensips:/etc/opensips
+

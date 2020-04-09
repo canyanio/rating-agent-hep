@@ -7,8 +7,8 @@ setup:
       query: |
         mutation {
           a1:upsertAccount(
-            name: "Fabio",
-            account_tag: "1000",
+            name: "Alex",
+            account_tag: "2000",
             type: PREPAID,
             balance: 1000000,
             active: true,
@@ -17,8 +17,8 @@ setup:
             id
           }
           a2:upsertAccount(
-            name: "Alex",
-            account_tag: "1001",
+            name: "Fabio",
+            account_tag: "2001",
             type: PREPAID,
             balance: 1000000,
             active: true,
@@ -44,7 +44,7 @@ setup:
           upsertPricelistRate(
             carrier_tag: "carrier",
             pricelist_tag: "pricelist",
-            prefix: "sip:39",
+            prefix: "sip:49",
             active: true,
             description: "pricelist rate",
             rate: 1,
@@ -57,7 +57,7 @@ setup:
         }
 
 workers:
-  - scenario: "test_kamailio_call.xml"
+  - scenario: "test_opensips_call.xml"
     number: 1
     repeat: 1
     timeout: 600
@@ -67,13 +67,12 @@ workers:
     call_number: 1
     values:
       call_duration: 1000
-      from_user: "1000"
+      from_user: "2000"
       from_domain: "sip.canyan.io"
       from_port: "5060"
-      to_user: "1001"
+      to_user: "2001"
       to_domain: "sip.canyan.io"
       to_port: "5060"
-
 
 check:
   - type: api
@@ -84,7 +83,7 @@ check:
       query: |
         {
           allTransactions(
-            page:0, perPage: 1, sortField:"timestamp_begin", sortOrder:"desc", filter:{account_tag:"1000"}
+            page:0, perPage: 1, sortField:"timestamp_begin", sortOrder:"desc", filter:{account_tag:"2000"}
           ) {
             tenant
             account_tag
@@ -102,9 +101,9 @@ check:
         "data": {
           "allTransactions": [{
             "tenant": "default",
-            "account_tag": "1000",
-            "source": "sip:1000@sip.canyan.io",
-            "destination": "sip:1001@sip.canyan.io",
+            "account_tag": "2000",
+            "source": "sip:2000@sip.canyan.io",
+            "destination": "sip:2001@sip.canyan.io",
             "inbound": false,
             "failed": false,
             "failed_reason": "",
@@ -120,7 +119,7 @@ check:
       query: |
         {
           allTransactions(
-            page:0, perPage: 1, sortField:"timestamp_begin", sortOrder:"desc", filter:{account_tag:"1001"}
+            page:0, perPage: 1, sortField:"timestamp_begin", sortOrder:"desc", filter:{account_tag:"2001"}
           ) {
             tenant
             account_tag
@@ -138,9 +137,9 @@ check:
         "data": {
           "allTransactions": [{
             "tenant": "default",
-            "account_tag": "1001",
-            "source": "sip:1000@sip.canyan.io",
-            "destination": "sip:1001@sip.canyan.io",
+            "account_tag": "2001",
+            "source": "sip:2000@sip.canyan.io",
+            "destination": "sip:2001@sip.canyan.io",
             "inbound": true,
             "failed": false,
             "failed_reason": "",

@@ -7,7 +7,8 @@ services:
   tester:
     image: 'canyan/canyan-tester:master'
     environment:
-      TARGET: kamailio:5060
+      TARGET_KAMAILIO: kamailio:5060
+      TARGET_OPENSIPS: opensips:5060
     volumes:
       - "./tests/:/tests/"
     command: sh -c "while true; do sleep 5; done;"

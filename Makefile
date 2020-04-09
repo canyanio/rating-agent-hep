@@ -2,7 +2,7 @@ GO ?= go
 GOFMT ?= gofmt "-s"
 PACKAGES ?= $(shell $(GO) list ./...)
 GOFILES := $(shell find . -name "*.go" -type f -not -path './vendor/*')
-DOCKER_COMPOSE_FILES = -f docker-compose.yaml -f docker-compose.carrier.yaml -f docker-compose.kamailio.yaml -f docker-compose.mongodb.yaml -f docker-compose.rabbitmq.yaml -f docker-compose.rating.yaml -f docker-compose.redis.yaml -f docker-compose.tester.yaml
+DOCKER_COMPOSE_FILES = -f docker-compose.yaml -f docker-compose.carrier.yaml -f docker-compose.kamailio.yaml -f docker-compose.opensips.yaml -f docker-compose.mongodb.yaml -f docker-compose.rabbitmq.yaml -f docker-compose.rating.yaml -f docker-compose.redis.yaml -f docker-compose.tester.yaml
 
 
 .PHONY: all
@@ -56,6 +56,14 @@ docker-start:
 .PHONY: docker-test
 docker-test:
 	docker exec rating-agent-hep_tester_1 pytest /tests/ -vv
+
+.PHONY: docker-test-opensips
+docker-test-opensips:
+	docker exec rating-agent-hep_tester_1 pytest -k kamailio -vv
+
+.PHONY: docker-test-kamailio
+docker-test-kamailio:
+	docker exec rating-agent-hep_tester_1 pytest -k opensips -vv
 
 .PHONY: docker-logs
 docker-logs:
