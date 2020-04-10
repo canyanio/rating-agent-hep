@@ -26,7 +26,7 @@ const (
 	StateManagerTTLCall   = 3600 * 6
 )
 
-func (s *UDPServer) handle(ctx context.Context, pc net.PacketConn, addr net.Addr, packet []byte) {
+func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 	reqID := uuid.New()
 
 	l := log.FromContext(ctx)

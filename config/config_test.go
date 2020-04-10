@@ -27,12 +27,12 @@ func TestInitConfigFile(t *testing.T) {
 
 	defer syscall.Unlink(f.Name())
 
-	configFile := fmt.Sprintf("listen: %s\n", listen)
+	configFile := fmt.Sprintf("listen_udp: %s\n", listen)
 	ioutil.WriteFile(f.Name(), []byte(configFile), 0644)
 
 	err = Init(f.Name())
 	assert.Nil(t, err)
 
-	settingListen := config.Config.GetString(SettingListen)
-	assert.Equal(t, listen, settingListen)
+	settingListenUDP := config.Config.GetString(SettingListenUDP)
+	assert.Equal(t, listen, settingListenUDP)
 }
