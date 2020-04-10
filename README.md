@@ -10,7 +10,7 @@ Canyan aims to address these challenges with a cloud-native scalable solution, e
 
 Ease of use is addressed with comprehensive documentation, examples and high-quality software (see the test coverage badge).
 
-Canyan Rating is designed as a microservice architecture and comprises [several repositories](https://github.com/canyanio). Its components are stateless and easily deployable via containers on-premises or in the cloud. This repository contains the Canyan Rating API.
+Canyan Rating is designed as a microservice architecture and comprises [several repositories](https://github.com/canyanio). Its components are stateless and easily deployable via containers on-premises or in the cloud. This repository contains the Canyan Rating HEP Agent.
 
 ![Canyan logo](https://canyanio.github.io/rating-integration/canyan-logo.png)
 

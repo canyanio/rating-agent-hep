@@ -1,0 +1,2 @@
+id(int,auto) setid(int) destination(string) socket(string,null) state(int) weight(string) priority(int) attrs(string) description(string)
+0:2:sip\:carrier\:5060::0:10:1:'':'carrier1'
