@@ -14,10 +14,15 @@ const (
 )
 
 const (
-	// SettingListen is the config key for the listen address
-	SettingListen = "listen"
-	// SettingListenDefault is the default value for the listen address
-	SettingListenDefault = ":9060"
+	// SettingListenUDP is the config key for enabling the UDP protocol
+	SettingListenUDP = "listen_udp"
+	// SettingListenUDPDefault is the default value for the UDP protocol
+	SettingListenUDPDefault = ":9060"
+
+	// SettingListenTCP is the config key for enabling the TCP protocol
+	SettingListenTCP = "listen_tcp"
+	// SettingListenTCPDefault is the default value for the TCP protocol
+	SettingListenTCPDefault = ":9060"
 
 	// SettingMessageBusURI is the config key for the message bus URI
 	SettingMessageBusURI = "message_bus_uri"
@@ -60,7 +65,8 @@ const (
 var (
 	// Defaults are the default configuration settings
 	Defaults = []config.Default{
-		{Key: SettingListen, Value: SettingListenDefault},
+		{Key: SettingListenUDP, Value: SettingListenUDPDefault},
+		{Key: SettingListenTCP, Value: SettingListenTCPDefault},
 		{Key: SettingMessageBusURI, Value: SettingMessageBusURIDefault},
 		{Key: SettingTenant, Value: SettingTenantDefault},
 		{Key: SettingStateManager, Value: SettingStateManagerDefault},

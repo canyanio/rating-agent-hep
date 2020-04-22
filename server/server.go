@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net"
 	"os"
 	"os/signal"
@@ -16,37 +17,39 @@ import (
 	"github.com/canyanio/rating-agent-hep/state"
 )
 
-// UDPServerInterface is the interface for Server objects
-type UDPServerInterface interface {
+// Interface is the interface for Server objects
+type Interface interface {
 	Start() error
 }
 
-// UDPServer is the UDP server
-type UDPServer struct {
+// Server is the UDP/TCP server
+type Server struct {
 	processor processor.HEPProcessorInterface
 	state     state.ManagerInterface
 	client    rabbitmq.ClientInterface
-	listen    string
+	listenUDP string
+	listenTCP string
 	quit      chan os.Signal
 }
 
-// UDP packet received by the UDP server
+// UDP/TCP packet received by the UDP/TCP server
 type packet struct {
-	pc      net.PacketConn
 	addr    net.Addr
 	payload []byte
 }
 
-// NewUDPServer initializes a new UDP server
-func NewUDPServer() *UDPServer {
-	listen := config.Config.GetString(dconfig.SettingListen)
+// NewServer initializes a new UDP/TCP server
+func NewServer() *Server {
+	listenUDP := config.Config.GetString(dconfig.SettingListenUDP)
+	listenTCP := config.Config.GetString(dconfig.SettingListenTCP)
 	messagebusURI := config.Config.GetString(dconfig.SettingMessageBusURI)
 	stateManagerType := config.Config.GetString(dconfig.SettingStateManager)
 	redisAddress := config.Config.GetString(dconfig.SettingRedisAddress)
 	redisPassword := config.Config.GetString(dconfig.SettingRedisPassword)
 	redisDb := config.Config.GetInt(dconfig.SettingRedisDb)
-	return newUDPServerWithConfig(
-		listen,
+	return newServerWithConfig(
+		listenUDP,
+		listenTCP,
 		messagebusURI,
 		stateManagerType,
 		redisAddress,
@@ -55,7 +58,7 @@ func NewUDPServer() *UDPServer {
 	)
 }
 
-func newUDPServerWithConfig(listen, messagebusURI, stateManagerType, redisAddress, redisPassword string, redisDb int) *UDPServer {
+func newServerWithConfig(listenUDP, listenTCP, messagebusURI, stateManagerType, redisAddress, redisPassword string, redisDb int) *Server {
 	var stateManager state.ManagerInterface
 	if stateManagerType == dconfig.StateManagerRedis {
 		stateManager = state.NewRedisManager(redisAddress, redisPassword, redisDb)
@@ -69,25 +72,30 @@ func newUDPServerWithConfig(listen, messagebusURI, stateManagerType, redisAddres
 
 	signal.Notify(quit, unix.SIGINT, unix.SIGTERM)
 
-	return &UDPServer{
+	return &Server{
 		processor: processor,
 		client:    client,
 		state:     stateManager,
 		quit:      quit,
-		listen:    listen,
+		listenUDP: listenUDP,
+		listenTCP: listenTCP,
 	}
 }
 
-func (s *UDPServer) setListen(listen string) {
-	s.listen = listen
+func (s *Server) setListenUDP(listen string) {
+	s.listenUDP = listen
 }
 
-func (s *UDPServer) setClient(c rabbitmq.ClientInterface) {
+func (s *Server) setListenTCP(listen string) {
+	s.listenTCP = listen
+}
+
+func (s *Server) setClient(c rabbitmq.ClientInterface) {
 	s.client = c
 }
 
-// Start starts the UDP server which receives the HEP packats
-func (s *UDPServer) Start() error {
+// Start starts the UDP/TCP server which receives the HEP packats
+func (s *Server) Start() error {
 	ctx := context.Background()
 	l := log.FromContext(ctx)
 
@@ -103,45 +111,98 @@ func (s *UDPServer) Start() error {
 	}
 	defer s.client.Close(ctx)
 
-	l.Infof("Listening on %v", s.listen)
-	pc, err := net.ListenPacket("udp", s.listen)
-	if err != nil {
+	listenUDP := s.listenUDP
+	var pc net.PacketConn
+	if listenUDP != "" {
+		l.Infof("Listening on udp:%v", listenUDP)
+		var err error
+		pc, err = net.ListenPacket("udp", listenUDP)
+		if err != nil {
+			l.Error(err)
+			return err
+		}
+	}
+
+	listenTCP := s.listenTCP
+	var li net.Listener
+	if listenTCP != "" {
+		l.Infof("Listening on tcp:%v", listenTCP)
+		var err error
+		li, err = net.Listen("tcp", listenTCP)
+		if err != nil {
+			l.Error(err)
+			return err
+		}
+	}
+
+	if listenUDP == "" && listenTCP == "" {
+		err := errors.New("neither listen_tcp nor listen_udp are set, exiting")
 		l.Error(err)
 		return err
 	}
-	defer pc.Close()
 
 	packets := make(chan packet)
-	go func() {
-		for {
-			buf := make([]byte, 65536)
-			n, addr, err := pc.ReadFrom(buf)
-			if err != nil {
-				continue
+
+	if listenUDP != "" {
+		go func() {
+			for {
+				buf := make([]byte, 65536)
+				n, addr, err := pc.ReadFrom(buf)
+				if err != nil {
+					continue
+				}
+				packets <- packet{
+					addr:    addr,
+					payload: buf[:n],
+				}
 			}
-			packets <- packet{
-				pc:      pc,
-				addr:    addr,
-				payload: buf[:n],
+		}()
+	}
+
+	if listenTCP != "" {
+		go func() {
+			for {
+				conn, err := li.Accept()
+				if err != nil {
+					continue
+				}
+				go func() {
+					for {
+						buf := make([]byte, 65536)
+						n, err := conn.Read(buf)
+						if err != nil {
+							return
+						}
+						packets <- packet{
+							addr:    conn.RemoteAddr(),
+							payload: buf[:n],
+						}
+					}
+				}()
 			}
-		}
-	}()
+		}()
+	}
 
 	for {
 		select {
 		case pkt := <-packets:
-			go s.handle(ctx, pkt.pc, pkt.addr, pkt.payload)
+			go s.handle(ctx, pkt.addr, pkt.payload)
 			break
 
 		case <-s.quit:
-			pc.Close()
+			if listenUDP != "" {
+				pc.Close()
+			}
+			if listenTCP != "" {
+				li.Close()
+			}
 			return nil
 		}
 	}
 }
 
-// Stop stops the UDP server
-func (s *UDPServer) Stop() {
+// Stop stops the UDP/TCP server
+func (s *Server) Stop() {
 	close(s.quit)
 
 	ctx := context.Background()

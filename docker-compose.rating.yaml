@@ -18,7 +18,7 @@ services:
     restart: always
 
   #
-  # rating-agent
+  # rating-engine
   #
   rating-engine:
     image: 'canyan/rating-engine:master'

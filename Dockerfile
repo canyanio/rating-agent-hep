@@ -17,3 +17,4 @@ COPY --from=builder /go/src/github.com/canyanio/rating-agent-hep/rating-agent-he
 ENTRYPOINT ["/usr/bin/rating-agent-hep", "--config", "/etc/rating-agent-hep/config.yaml"]
 
 EXPOSE 9060/udp
+EXPOSE 9060

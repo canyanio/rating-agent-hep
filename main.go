@@ -63,7 +63,7 @@ func doMain(args []string) {
 }
 
 func cmdAgent(args *cli.Context) error {
-	srv := server.NewUDPServer()
+	srv := server.NewServer()
 	err := srv.Start()
 	return err
 }

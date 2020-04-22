@@ -1,8 +1,17 @@
 # Agent listen address (UDP)
 # Defauls to: ":9060" which will listen on all avalable interfaces.
-# Overwrite with environment variable: RATING_AGENT_HEP_LISTEN
+# Set to empty string to disable UDP
+# Overwrite with environment variable: RATING_AGENT_HEP_LISTEN_UDP
 
-# listen: :9060
+# listen_udp: :9060
+
+
+# Agent listen address (TCP)
+# Defauls to: ":9060" which will listen on all avalable interfaces.
+# Set to empty string to disable TCP
+# Overwrite with environment variable: RATING_AGENT_HEP_LISTEN_TCP
+
+# listen_tcp: :9060
 
 
 # Message bus URI
