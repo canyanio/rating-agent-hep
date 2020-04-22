@@ -22,6 +22,7 @@ const (
 	MethodInvite          = "INVITE"
 	MethodAck             = "ACK"
 	MethodBye             = "BYE"
+	MethodCancel          = "CANCEL"
 	StateManagerTTLInvite = 600
 	StateManagerTTLCall   = 3600 * 6
 )
@@ -69,20 +70,16 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 			TimestampInvite:       msg.Timestamp,
 			CSeq:                  CSeqID,
 		}
-		s.state.Set(ctx, callID, call, StateManagerTTLInvite)
-
-		l.WithFields(logrus.Fields{
-			"req-id":  reqID,
-			"source":  addr.String(),
-			"length":  len(packet),
-			"method":  requestMethod,
-			"call-id": callID,
-			"ts":      msg.Timestamp,
-		}).Debug("call status set in the state manager, waiting for the ACK")
-	} else if requestMethod == MethodAck {
-		var call model.Call
-		err := s.state.Get(ctx, callID, &call)
-		if err != nil || call.CSeq == "" {
+		err := s.state.Set(ctx, callID, call, StateManagerTTLInvite)
+		if err != nil {
+			l.WithFields(logrus.Fields{
+				"req-id":  reqID,
+				"method":  requestMethod,
+				"call-id": callID,
+				"ts":      msg.Timestamp,
+				"err":     err.Error(),
+			}).Error("unable to set the call status")
+		} else {
 			l.WithFields(logrus.Fields{
 				"req-id":  reqID,
 				"source":  addr.String(),
@@ -90,7 +87,25 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 				"method":  requestMethod,
 				"call-id": callID,
 				"ts":      msg.Timestamp,
-			}).Error("unable to retrieve the status status, INVITE has not been received for this calls")
+			}).Debug("call status set in the state manager, waiting for the ACK")
+		}
+	} else if requestMethod == MethodAck {
+		var call model.Call
+		err := s.state.Get(ctx, callID, &call)
+		if err != nil || call.CSeq == "" {
+			var errStr string
+			if err != nil {
+				errStr = err.Error()
+			}
+			l.WithFields(logrus.Fields{
+				"req-id":  reqID,
+				"source":  addr.String(),
+				"length":  len(packet),
+				"method":  requestMethod,
+				"call-id": callID,
+				"ts":      msg.Timestamp,
+				"err":     errStr,
+			}).Error("unable to retrieve the call status, INVITE has not been received for this calls")
 			return
 		}
 
@@ -121,7 +136,7 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 				"ts":      msg.Timestamp,
 			}).Debug("call start detected: begin transaction")
 		}
-	} else if requestMethod == MethodBye {
+	} else if requestMethod == MethodBye || requestMethod == MethodCancel {
 		s.state.Delete(ctx, callID)
 
 		routingKey = rabbitmq.QueueNameEndTransaction
@@ -154,6 +169,7 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 				"length":  len(packet),
 				"method":  requestMethod,
 				"call-id": callID,
+				"err":     err.Error(),
 			}).Error("unable to publish the request")
 
 			return
