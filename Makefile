@@ -56,14 +56,16 @@ docker-start:
 	sleep 5
 	docker-compose $(DOCKER_COMPOSE_FILES) up -d
 
+.PHONY: docker-pull
+docker-pull:
+	docker-compose $(DOCKER_COMPOSE_FILES) -f docker-compose.kamailio.yaml -f docker-compose.opensips.yaml pull
+
 .PHONY: docker-start-kamailio
-docker-start-kamailio:
-	make docker-start
+docker-start-kamailio: docker-start
 	docker-compose -f docker-compose.kamailio.yaml up -d
 
 .PHONY: docker-start-opensips
-docker-start-opensips:
-	make docker-start
+docker-start-opensips: docker-start
 	docker-compose -f docker-compose.opensips.yaml up -d
 
 .PHONY: docker-test-kamailio
@@ -75,9 +77,7 @@ docker-test-opensips:
 	docker exec rating-agent-hep_tester_1 pytest -k opensips /tests/ -vv
 
 .PHONY: docker-test
-docker-test:
-	make docker-test-kamailio
-	make docker-test-opensips
+docker-test: docker-test-kamailio docker-test-opensips
 
 .PHONY: docker-logs
 docker-logs:

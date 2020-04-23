@@ -90,8 +90,6 @@ check:
             source
             destination
             inbound
-            failed
-            failed_reason
           }
         }
     expected_response: |
@@ -102,9 +100,7 @@ check:
             "account_tag": "2000",
             "source": "sip:2000@sip.canyan.io",
             "destination": "sip:2001@sip.canyan.io",
-            "inbound": false,
-            "failed": false,
-            "failed_reason": ""
+            "inbound": false
           }]
         }
       }
@@ -122,8 +118,6 @@ check:
             source
             destination
             inbound
-            failed
-            failed_reason
           }
         }
     expected_response: |
@@ -134,9 +128,7 @@ check:
             "account_tag": "2001",
             "source": "sip:2000@sip.canyan.io",
             "destination": "sip:2001@sip.canyan.io",
-            "inbound": true,
-            "failed": false,
-            "failed_reason": ""
+            "inbound": true
           }]
         }
       }
