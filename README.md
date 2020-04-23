@@ -1,4 +1,7 @@
-[![Build Status](https://gitlab.com/canyan/rating-agent-hep/badges/master/pipeline.svg)](https://gitlab.com/canyan/rating-agent-hep/pipelines) [![codecov](https://codecov.io/gh/canyanio/rating-agent-hep/branch/master/graph/badge.svg)](https://codecov.io/gh/canyanio/rating-agent-hep) [![Docker pulls](https://img.shields.io/docker/pulls/canyan/rating-agent-hep.svg?maxAge=3600)](https://hub.docker.com/repository/docker/canyan/rating-agent-hep)
+[![Build Status](https://gitlab.com/canyan/rating-agent-hep/badges/master/pipeline.svg)](https://gitlab.com/canyan/rating-agent-hep/pipelines)
+[![codecov](https://codecov.io/gh/canyanio/rating-agent-hep/branch/master/graph/badge.svg)](https://codecov.io/gh/canyanio/rating-agent-hep)
+[![Go Report Card](https://goreportcard.com/badge/github.com/canyanio/rating-agent-hep)](https://goreportcard.com/report/github.com/canyanio/rating-agent-hep)
+[![Docker pulls](https://img.shields.io/docker/pulls/canyan/rating-agent-hep.svg?maxAge=3600)](https://hub.docker.com/repository/docker/canyan/rating-agent-hep)
 
 # Canyan Rating: HEP agent
 
