@@ -76,3 +76,17 @@
 # Overwrite with environment variable: RATING_AGENT_HEP_SIP_LOCAL_DOMAINS
 
 # sip_local_domains: []
+
+
+# Product tag
+# Defauls to: "VOICE"
+# Overwrite with environment variable: RATING_AGENT_HEP_PRODUCT_TAG
+
+# product_tag: ""
+
+
+# Transaction tags
+# Defauls to: []
+# Overwrite with environment variable: RATING_AGENT_HEP_SIP_TRANSACTION_TAGS
+
+# transaction_tags: []

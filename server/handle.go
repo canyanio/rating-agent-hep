@@ -48,6 +48,9 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 	CSeqParts := strings.SplitN(msg.Cseq.Val, " ", 2)
 	CSeqID := CSeqParts[0]
 
+	productTag := config.Config.GetString(dconfig.SettingProductTag)
+	transactionTags := config.Config.GetStringSlice(dconfig.SettingTransactionTags)
+
 	l.WithFields(logrus.Fields{
 		"req-id":        reqID,
 		"source":        addr.String(),
@@ -123,6 +126,8 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 					DestinationAccountTag: call.DestinationAccountTag,
 					Source:                call.Source,
 					Destination:           call.Destination,
+					ProductTag:            productTag,
+					Tags:                  transactionTags,
 					TimestampBegin:        msg.Timestamp.UTC().Format(time.RFC3339),
 				},
 			}

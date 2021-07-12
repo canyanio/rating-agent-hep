@@ -60,6 +60,14 @@ const (
 
 	// SettingSIPLocalDomains is a comma separated list of local domains
 	SettingSIPLocalDomains = "sip_local_domains"
+
+	// SettingProductTag is the product tag
+	SettingProductTag = "product_tag"
+	// SettingProductTagDefault is the product tag default value
+	SettingProductTagDefault = "VOICE"
+
+	// SettingTransactionTags is a comma separated list of transaction tags
+	SettingTransactionTags = "transaction_tags"
 )
 
 var (
@@ -72,6 +80,7 @@ var (
 		{Key: SettingStateManager, Value: SettingStateManagerDefault},
 		{Key: SettingRedisAddress, Value: SettingRedisAddressDefault},
 		{Key: SettingRedisDb, Value: SettingRedisDbDefault},
+		{Key: SettingProductTag, Value: SettingProductTagDefault},
 	}
 )
 
