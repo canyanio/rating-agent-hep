@@ -35,12 +35,15 @@ func TestParseSIPMessage(t *testing.T) {
 
 func TestParseSIPMessageWithSettings(t *testing.T) {
 	var tests = []struct {
-		payload               string
-		accountTag            string
-		destinationAccountTag string
-		sipHeaderCaller       string
-		sipHeaderCallee       string
-		sipLocalDomains       []string
+		payload                   string
+		accountTag                string
+		destinationAccountTag     string
+		sipHeaderCaller           string
+		sipHeaderCallee           string
+		sipHeaderHistoryInfo      string
+		sipHeaderHistoryInfoIndex int
+		sipLocalDomains           []string
+		accountTagMatchRegexp     string
 	}{
 		// P-Asserted-Identity without domain filters
 		{
@@ -171,11 +174,59 @@ func TestParseSIPMessageWithSettings(t *testing.T) {
 			accountTag:            "",
 			destinationAccountTag: "",
 			sipLocalDomains:       []string{"dummy"},
-		}}
+		},
+		// P-Asserted-Identity with domain filters and regexp
+		{
+			payload: "INVITE sip:+390759975378@telecomitalia.it;user=phone SIP/2.0\r\n" +
+				"Via: SIP/2.0/UDP 80.21.1.119:5060;branch=z9hG4bKvtfill3090fs7a6mvfm0.1\r\n" +
+				"To: <sip:+390759975378@operatore.it;user=phone>\r\n" +
+				"From: \"+39029501685\" <sip:+39029501685@ictvoip.it;user=phone>;tag=007694f3-0004-0001-0000-0000\r\n" +
+				"Call-ID: 007694680076945-0004-0001-0000-0000@172.16.30.36\r\n" +
+				"CSeq: 1 INVITE\r\n" +
+				"Max-Forwards: 69\r\n" +
+				"Contact: <sip:+39029501685@80.21.1.119:5060;transport=udp>\r\n" +
+				"Allow: INVITE, ACK, PRACK, CANCEL, BYE, OPTIONS, MESSAGE, NOTIFY, UPDATE, REGISTER, INFO, REFER, SUBSCRIBE, PUBLISH\r\n" +
+				"Supported: 100rel\r\n" +
+				"P-Asserted-Identity: <sip:+39029501685@ictvoip.it;user=phone>\r\n" +
+				"Accept: application/sdp, application/isup, application/xml\r\n" +
+				"Content-Type: application/sdp\r\n" +
+				"Content-Length: 259\r\n" +
+				"Route: <sip:+390759975378@37.10.80.21:5060;user=phone;lr>",
+			accountTag:            "029501685",
+			accountTagMatchRegexp: "\\+39([0-9]+)",
+			sipLocalDomains:       []string{"ictvoip.it", "sip.ictvoip.it"},
+		},
+		// History-Info with domain filters and regexp
+		{
+			payload: "INVITE sip:+390759975378@telecomitalia.it;user=phone SIP/2.0\r\n" +
+				"Via: SIP/2.0/UDP 80.21.1.119:5060;branch=z9hG4bKvtfill3090fs7a6mvfm0.1\r\n" +
+				"To: <sip:+390759975378@operatore.it;user=phone>\r\n" +
+				"From: \"+39029501685\" <sip:+39029501685@ictvoip.it;user=phone>;tag=007694f3-0004-0001-0000-0000\r\n" +
+				"Call-ID: 007694680076945-0004-0001-0000-0000@172.16.30.36\r\n" +
+				"CSeq: 1 INVITE\r\n" +
+				"Max-Forwards: 69\r\n" +
+				"Contact: <sip:+39029501685@80.21.1.119:5060;transport=udp>\r\n" +
+				"Allow: INVITE, ACK, PRACK, CANCEL, BYE, OPTIONS, MESSAGE, NOTIFY, UPDATE, REGISTER, INFO, REFER, SUBSCRIBE, PUBLISH\r\n" +
+				"Supported: 100rel\r\n" +
+				"P-Asserted-Identity: <sip:+39029501685@ictvoip.it;user=phone>\r\n" +
+				"Accept: application/sdp, application/isup, application/xml\r\n" +
+				"History-Info: <sip:+3902888804@ictvoip.it;user=phone?Privacy=history>;index=1\r\n" +
+				"History-Info: <sip:+390759975378@ictvoip.it;user=phone;cause=302>;index=1.1\r\n" +
+				"Content-Type: application/sdp\r\n" +
+				"Content-Length: 259\r\n" +
+				"Route: <sip:+390759975378@37.10.80.21:5060;user=phone;lr>",
+			accountTag:                "02888804",
+			accountTagMatchRegexp:     "\\+39([0-9]+)",
+			sipHeaderHistoryInfo:      "History-Info",
+			sipHeaderHistoryInfoIndex: 1,
+			sipLocalDomains:           []string{"ictvoip.it", "sip.ictvoip.it"},
+		},
+	}
 
 	for _, test := range tests {
 		msg := parseSIPMessageWithSettings(test.payload, time.Now(),
-			test.sipHeaderCaller, test.sipHeaderCallee, test.sipLocalDomains)
+			test.sipHeaderCaller, test.sipHeaderCallee, test.sipHeaderHistoryInfo,
+			test.sipHeaderHistoryInfoIndex, test.sipLocalDomains, test.accountTagMatchRegexp)
 		assert.NotNil(t, msg)
 
 		assert.Equal(t, test.accountTag, msg.AccountTag)

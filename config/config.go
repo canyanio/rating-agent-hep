@@ -52,14 +52,25 @@ const (
 	// SettingTenantDefault is the default value for the tenant
 	SettingTenantDefault = "default"
 
-	// SettingSIPHeaderCaller is the SIP header used to extract identity of the caller
+	// SettingSIPHeaderCaller is the SIP header used to extract the identifier of the caller
 	SettingSIPHeaderCaller = "sip_header_caller"
 
-	// SettingSIPHeaderCallee is the SIP header used to extract identity of the callee
+	// SettingSIPHeaderCallee is the SIP header used to extract the identifier of the callee
 	SettingSIPHeaderCallee = "sip_header_callee"
+
+	// SettingSIPHeaderHistoryInfo is the SIP header used to extract the identifier of the caller on call forwarding
+	SettingSIPHeaderHistoryInfo        = "sip_header_history_info"
+	SettingSIPHeaderHistoryInfoDefault = "History-Info"
+
+	// SettingSIPHeaderHistoryInfoIndex is the index of the SIP header used to extract the identifier of the caller on call forwarding
+	SettingSIPHeaderHistoryInfoIndex        = "sip_header_history_info_index"
+	SettingSIPHeaderHistoryInfoIndexDefault = 1
 
 	// SettingSIPLocalDomains is a comma separated list of local domains
 	SettingSIPLocalDomains = "sip_local_domains"
+
+	// SettingAccountTagMatchRegexp is a regular expression to extract the sip account
+	SettingAccountTagMatchRegexp = "account_tag_match_regexp"
 
 	// SettingProductTag is the product tag
 	SettingProductTag = "product_tag"
@@ -81,6 +92,8 @@ var (
 		{Key: SettingRedisAddress, Value: SettingRedisAddressDefault},
 		{Key: SettingRedisDb, Value: SettingRedisDbDefault},
 		{Key: SettingProductTag, Value: SettingProductTagDefault},
+		{Key: SettingSIPHeaderHistoryInfo, Value: SettingSIPHeaderHistoryInfoDefault},
+		{Key: SettingSIPHeaderHistoryInfoIndex, Value: SettingSIPHeaderHistoryInfoIndexDefault},
 	}
 )
 
