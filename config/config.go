@@ -59,7 +59,8 @@ const (
 	SettingSIPHeaderCallee = "sip_header_callee"
 
 	// SettingSIPHeaderHistoryInfo is the SIP header used to extract the identifier of the caller on call forwarding
-	SettingSIPHeaderHistoryInfo        = "sip_header_history_info"
+	SettingSIPHeaderHistoryInfo = "sip_header_history_info"
+	// SettingSIPHeaderHistoryInfoDefault is the default value for sip_header_history_info
 	SettingSIPHeaderHistoryInfoDefault = "History-Info"
 
 	// SettingSIPHeaderHistoryInfoIndex is the index of the SIP header used to extract the identifier of the caller on call forwarding
