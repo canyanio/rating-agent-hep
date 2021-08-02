@@ -55,8 +55,8 @@ func parseSIPMessageWithSettings(payload string, timestamp time.Time, sipHeaderC
 	}
 
 	msg := sipparser.ParseMsg(payload, []string{}, customHeaders)
-	accountTag := ""
 
+	accountTag := ""
 	if sipHeaderHistoryInfo != "" {
 		if regexp, err := regexp.Compile(sipHeaderHistoryInfo + ":\\s*<sip:(.+)@"); err == nil {
 			if matches := regexp.FindAllStringSubmatch(payload, -1); sipHeaderHistoryInfoIndex >= 0 && len(matches) > sipHeaderHistoryInfoIndex {
