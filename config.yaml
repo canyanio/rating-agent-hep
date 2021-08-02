@@ -71,11 +71,32 @@
 # sip_header_callee: ""
 
 
+# SIP Header to extract call forwarding
+# Defauls to: "History-Info"
+# Overwrite with environment variable: RATING_AGENT_HEP_SIP_HISTORY_INFO
+
+# sip_header_history_info: "History-Info"
+
+
+# SIP Header index to extract call forwarding
+# Defauls to: 1
+# Overwrite with environment variable: RATING_AGENT_HEP_SIP_HISTORY_INFO_INDEX
+
+# sip_header_history_info_index: 1
+
+
 # SIP local domains
 # Defauls to: [] which disables the identification of accounts based on domain
 # Overwrite with environment variable: RATING_AGENT_HEP_SIP_LOCAL_DOMAINS
 
 # sip_local_domains: []
+
+
+# Account tag match regular expression
+# Defaults to: "" which disables the feature
+# Overwrite with environment variable: RATING_AGENT_HEP_ACCOUNT_TAG_MATCH_REGEXP
+
+# account_tag_match_regexp: ""
 
 
 # Product tag
