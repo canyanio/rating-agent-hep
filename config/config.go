@@ -64,7 +64,8 @@ const (
 	SettingSIPHeaderHistoryInfoDefault = "History-Info"
 
 	// SettingSIPHeaderHistoryInfoIndex is the index of the SIP header used to extract the identifier of the caller on call forwarding
-	SettingSIPHeaderHistoryInfoIndex        = "sip_header_history_info_index"
+	SettingSIPHeaderHistoryInfoIndex = "sip_header_history_info_index"
+	// SettingSIPHeaderHistoryInfoIndexDefault is the default value for sip_header_history_info_index
 	SettingSIPHeaderHistoryInfoIndexDefault = 1
 
 	// SettingSIPLocalDomains is a comma separated list of local domains
