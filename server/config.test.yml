@@ -1,0 +1,1 @@
+sip_local_domains: ["192.168.192.2", "anotherdomain.com"]

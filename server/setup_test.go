@@ -11,7 +11,7 @@ import (
 func TestMain(m *testing.M) {
 	flag.Parse()
 	if !testing.Short() {
-		config.Init("")
+		config.Init("config.test.yml")
 	}
 	result := m.Run()
 	os.Exit(result)

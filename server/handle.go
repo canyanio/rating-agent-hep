@@ -62,12 +62,12 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 
 	var routingKey string
 	var req interface{}
-	if requestMethod == MethodInvite {
+	if requestMethod == MethodInvite && (msg.AccountTag != "" || msg.DestinationAccountTag != "") {
 		call := &model.Call{
 			Tenant:                config.Config.GetString(dconfig.SettingTenant),
 			TransactionTag:        callID,
-			AccountTag:            msg.FromUser,
-			DestinationAccountTag: msg.ToUser,
+			AccountTag:            msg.AccountTag,
+			DestinationAccountTag: msg.DestinationAccountTag,
 			Source:                "sip:" + msg.FromUser + "@" + msg.FromHost,
 			Destination:           "sip:" + msg.ToUser + "@" + msg.ToHost,
 			TimestampInvite:       msg.Timestamp,
@@ -92,7 +92,7 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 				"ts":      msg.Timestamp,
 			}).Debug("call status set in the state manager, waiting for the ACK")
 		}
-	} else if requestMethod == MethodAck {
+	} else {
 		var call model.Call
 		err := s.state.Get(ctx, callID, &call)
 		if err != nil || call.CSeq == "" {
@@ -112,23 +112,47 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 			return
 		}
 
-		if CSeqID == call.CSeq && call.TimestampAck.IsZero() &&
-			(call.AccountTag != "" || call.DestinationAccountTag != "") {
-			call.TimestampAck = msg.Timestamp
-			s.state.Set(ctx, call.TransactionTag, call, StateManagerTTLCall)
+		if requestMethod == MethodAck {
+			if CSeqID == call.CSeq && call.TimestampAck.IsZero() &&
+				(call.AccountTag != "" || call.DestinationAccountTag != "") {
+				call.TimestampAck = msg.Timestamp
+				s.state.Set(ctx, call.TransactionTag, call, StateManagerTTLCall)
 
-			routingKey = rabbitmq.QueueNameBeginTransaction
-			req = &model.BeginTransaction{
-				Request: model.BeginTransactionRequest{
-					Tenant:                call.Tenant,
-					TransactionTag:        call.TransactionTag,
+				routingKey = rabbitmq.QueueNameBeginTransaction
+				req = &model.BeginTransaction{
+					Request: model.BeginTransactionRequest{
+						Tenant:                call.Tenant,
+						TransactionTag:        call.TransactionTag,
+						AccountTag:            call.AccountTag,
+						DestinationAccountTag: call.DestinationAccountTag,
+						Source:                call.Source,
+						Destination:           call.Destination,
+						ProductTag:            productTag,
+						Tags:                  transactionTags,
+						TimestampBegin:        msg.Timestamp.UTC().Format(time.RFC3339),
+					},
+				}
+
+				l.WithFields(logrus.Fields{
+					"req-id":  reqID,
+					"source":  addr.String(),
+					"length":  len(packet),
+					"method":  requestMethod,
+					"call-id": callID,
+					"ts":      msg.Timestamp,
+				}).Debug("call start detected: begin transaction")
+			}
+		} else if requestMethod == MethodBye || requestMethod == MethodCancel {
+			s.state.Delete(ctx, callID)
+
+			routingKey = rabbitmq.QueueNameEndTransaction
+			req = &model.EndTransaction{
+				Request: model.EndTransactionRequest{
+					Tenant:                config.Config.GetString(dconfig.SettingTenant),
+					TransactionTag:        callID,
 					AccountTag:            call.AccountTag,
 					DestinationAccountTag: call.DestinationAccountTag,
-					Source:                call.Source,
-					Destination:           call.Destination,
-					ProductTag:            productTag,
-					Tags:                  transactionTags,
-					TimestampBegin:        msg.Timestamp.UTC().Format(time.RFC3339),
+					TimestampEnd:          msg.Timestamp.UTC().Format(time.RFC3339),
 				},
 			}
 
@@ -139,30 +163,8 @@ func (s *Server) handle(ctx context.Context, addr net.Addr, packet []byte) {
 				"method":  requestMethod,
 				"call-id": callID,
 				"ts":      msg.Timestamp,
-			}).Debug("call start detected: begin transaction")
+			}).Debug("call end detected: end transaction")
 		}
-	} else if requestMethod == MethodBye || requestMethod == MethodCancel {
-		s.state.Delete(ctx, callID)
-
-		routingKey = rabbitmq.QueueNameEndTransaction
-		req = &model.EndTransaction{
-			Request: model.EndTransactionRequest{
-				Tenant:                config.Config.GetString(dconfig.SettingTenant),
-				TransactionTag:        callID,
-				AccountTag:            msg.FromUser,
-				DestinationAccountTag: msg.ToUser,
-				TimestampEnd:          msg.Timestamp.UTC().Format(time.RFC3339),
-			},
-		}
-
-		l.WithFields(logrus.Fields{
-			"req-id":  reqID,
-			"source":  addr.String(),
-			"length":  len(packet),
-			"method":  requestMethod,
-			"call-id": callID,
-			"ts":      msg.Timestamp,
-		}).Debug("call end detected: end transaction")
 	}
 
 	if req != nil {
